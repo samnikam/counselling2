@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Assessment — Anantnag Youth Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* ===== Wellness quiz — full-page interactive experience ===== */
+        .quiz-hero {
+            position: relative;
+            padding: 120px 0 60px;
+            overflow: hidden;
+            background:
+                radial-gradient(46rem 30rem at 88% -10%, rgba(231, 169, 126, 0.28), transparent 60%),
+                radial-gradient(40rem 30rem at -6% 20%, rgba(183, 203, 178, 0.34), transparent 55%),
+                var(--cream);
+            text-align: center;
+        }
+
+        .quiz-hero .container {
+            max-width: 760px;
+        }
+
+        .quiz-hero h1 {
+            font-size: clamp(2.2rem, 5.2vw, 3.4rem);
+            margin: 14px 0 16px;
+        }
+
+        .quiz-hero h1 em {
+            font-style: normal;
+            color: var(--terracotta);
+        }
+
+        .quiz-hero p {
+            color: var(--green-soft);
+            font-size: 1.1rem;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .quiz-badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .quiz-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(33, 64, 47, 0.10);
+            border-radius: var(--radius-pill);
+            padding: 8px 16px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--green);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quiz-badge svg {
+            width: 15px;
+            height: 15px;
+            color: var(--leaf, #5B8A5A);
+        }
+
+        /* ===== Quiz stage ===== */
+        .quiz-stage-section {
+            padding: 0 0 80px;
+            margin-top: -34px;
+        }
+
+        .quiz-shell {
+            max-width: 820px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 28px;
+            border: 1px solid rgba(33, 64, 47, 0.10);
+            box-shadow: 0 30px 70px rgba(33, 64, 47, 0.14);
+            padding: 40px clamp(22px, 4vw, 52px) 34px;
+        }
+
+        /* progress */
+        .quiz-progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+        }
+
+        .quiz-progress-info .step {
+            font-family: var(--font-display);
+            font-weight: 600;
+            color: var(--green);
+            font-size: 1.05rem;
+        }
+
+        .quiz-progress-info .dim {
+            font-size: 0.76rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--terracotta);
+        }
+
+        .quiz-bar {
+            height: 10px;
+            border-radius: var(--radius-pill);
+            background: rgba(33, 64, 47, 0.08);
+            overflow: hidden;
+        }
+
+        .quiz-bar-fill {
+            height: 100%;
+            width: 20%;
+            border-radius: var(--radius-pill);
+            background: linear-gradient(90deg, var(--green), var(--leaf, #5B8A5A), var(--apricot));
+            transition: width 0.5s var(--ease);
+        }
+
+        /* question */
+        .quiz-question {
+            margin-top: 32px;
+            animation: qIn 0.45s var(--ease);
+        }
+
+        @keyframes qIn {
+            from { opacity: 0; transform: translateX(26px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .quiz-q {
+            font-family: var(--font-display);
+            font-size: clamp(1.35rem, 3vw, 1.9rem);
+            color: var(--green);
+            line-height: 1.25;
+            margin-bottom: 26px;
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 14px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-align: left;
+            width: 100%;
+            font-family: var(--font-body);
+            font-size: 1.02rem;
+            font-weight: 500;
+            color: var(--ink);
+            background: var(--cream);
+            border: 2px solid rgba(33, 64, 47, 0.10);
+            border-radius: 16px;
+            padding: 18px 22px;
+            cursor: pointer;
+            transition: transform 0.25s var(--ease), border-color 0.25s var(--ease), background 0.25s var(--ease), box-shadow 0.25s var(--ease);
+        }
+
+        .quiz-option:hover {
+            transform: translateX(6px);
+            border-color: var(--green);
+            box-shadow: 0 10px 24px rgba(33, 64, 47, 0.10);
+        }
+
+        .quiz-option .qo-mark {
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2px solid rgba(33, 64, 47, 0.25);
+            display: grid;
+            place-items: center;
+            transition: all 0.25s var(--ease);
+        }
+
+        .quiz-option .qo-mark svg {
+            width: 14px;
+            height: 14px;
+            color: #fff;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.25s var(--ease);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--green);
+            background: rgba(91, 138, 90, 0.12);
+            font-weight: 600;
+        }
+
+        .quiz-option.selected .qo-mark {
+            background: var(--green);
+            border-color: var(--green);
+        }
+
+        .quiz-option.selected .qo-mark svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* nav */
+        .quiz-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-top: 34px;
+        }
+
+        .quiz-nav .btn {
+            padding: 13px 30px;
+        }
+
+        .quiz-back {
+            visibility: hidden;
+        }
+
+        .quiz-back.show {
+            visibility: visible;
+        }
+
+        /* ===== Result ===== */
+        .quiz-result {
+            display: none;
+            max-width: 820px;
+            margin: 0 auto;
+            text-align: center;
+            background: var(--white);
+            border-radius: 28px;
+            border: 1px solid rgba(33, 64, 47, 0.10);
+            box-shadow: 0 30px 70px rgba(33, 64, 47, 0.14);
+            padding: 48px clamp(24px, 5vw, 56px);
+            animation: qIn 0.5s var(--ease);
+        }
+
+        .quiz-result.show {
+            display: block;
+        }
+
+        .result-eyebrow {
+            font-size: 0.78rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--terracotta);
+        }
+
+        /* circular meter */
+        .meter {
+            position: relative;
+            width: 190px;
+            height: 190px;
+            margin: 26px auto 8px;
+        }
+
+        .meter svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .meter .track {
+            fill: none;
+            stroke: rgba(33, 64, 47, 0.08);
+            stroke-width: 14;
+        }
+
+        .meter .fill {
+            fill: none;
+            stroke: var(--green);
+            stroke-width: 14;
+            stroke-linecap: round;
+            stroke-dasharray: 471;
+            stroke-dashoffset: 471;
+            transition: stroke-dashoffset 1.2s var(--ease), stroke 0.6s var(--ease);
+        }
+
+        .meter .center {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            flex-direction: column;
+        }
+
+        .meter .center b {
+            font-family: var(--font-display);
+            font-size: 2.6rem;
+            color: var(--green);
+            line-height: 1;
+        }
+
+        .meter .center small {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--green-soft);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .result-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.6rem, 4vw, 2.2rem);
+            color: var(--green);
+            margin: 10px 0 14px;
+        }
+
+        .result-desc {
+            font-size: 1.06rem;
+            line-height: 1.7;
+            color: var(--green-soft);
+            max-width: 620px;
+            margin: 0 auto 30px;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .result-restart {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 600;
+            color: var(--green-soft);
+            margin-top: 26px;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .result-restart:hover {
+            color: var(--terracotta);
+        }
+
+        @media (max-width: 560px) {
+            .quiz-shell { padding: 30px 18px 26px; border-radius: 22px; }
+            .quiz-result { padding: 36px 20px; border-radius: 22px; }
+            .quiz-nav .btn { padding: 12px 22px; flex: 1; text-align: center; }
+            .quiz-option { padding: 16px 16px; font-size: 0.96rem; gap: 12px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="container nav-inner">
+            <a href="index.html" class="logo">
+                <div class="logo-mark">A</div>
+                <div class="logo-text">Anantnag Youth Portal<span>District Administration · J&K</span></div>
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="services.html">Services Offered</a></li>
+                    <li><a href="counsellors.html">Our Counsellors</a></li>
+                    <li><a href="book-appointment.html">Book Appointment</a></li>
+                    <li><a href="self-assessment.html">Self Assessment</a></li>
+                    <li><a href="career.html">Programs</a></li>
+                    <li><a href="gallery.html">Gallery</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+            <button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+        </div>
+    </header>
+
+    <!-- ================= HERO ================= -->
+    <section class="quiz-hero">
+        <div class="container hero-stagger">
+            <span class="page-hero-eyebrow">Confidential · No Login · 2 Minutes</span>
+            <h1>Check In With <em>Yourself</em></h1>
+            <p>Five quick questions to reflect on your stress, focus, direction and well-being. Answer honestly — only
+                you see the result.</p>
+            <div class="quiz-badges">
+                <span class="quiz-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path></svg>
+                    100% Confidential
+                </span>
+                <span class="quiz-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>
+                    Takes 2 minutes
+                </span>
+                <span class="quiz-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                    No login needed
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= QUIZ STAGE ================= -->
+    <section class="quiz-stage-section">
+        <div class="container">
+
+            <!-- interactive quiz -->
+            <div class="quiz-shell reveal" id="quiz-shell">
+                <div class="quiz-progress">
+                    <div class="quiz-progress-info">
+                        <span class="step" id="q-step">Question 1 of 5</span>
+                        <span class="dim" id="q-dim">Academic Stress</span>
+                    </div>
+                    <div class="quiz-bar"><div class="quiz-bar-fill" id="q-fill"></div></div>
+                </div>
+
+                <div id="quiz-stage"><!-- question injected here --></div>
+
+                <div class="quiz-nav">
+                    <button class="btn btn-ghost quiz-back" id="q-back">← Back</button>
+                    <button class="btn btn-solid" id="q-next" disabled>Next →</button>
+                </div>
+            </div>
+
+            <!-- result -->
+            <div class="quiz-result" id="quiz-result">
+                <span class="result-eyebrow">Your Wellness Snapshot</span>
+                <div class="meter">
+                    <svg viewBox="0 0 170 170">
+                        <circle class="track" cx="85" cy="85" r="75"></circle>
+                        <circle class="fill" id="meter-fill" cx="85" cy="85" r="75"></circle>
+                    </svg>
+                    <div class="center">
+                        <div>
+                            <b id="meter-score">0</b>
+                            <small>out of 15</small>
+                        </div>
+                    </div>
+                </div>
+                <h2 class="result-title" id="result-title">Analysing…</h2>
+                <p class="result-desc" id="result-desc"></p>
+                <div class="result-actions">
+                    <a href="book-appointment.html" class="btn btn-solid">Book a Counselling Session</a>
+                    <a href="services.html" class="btn btn-ghost">Explore Support Services</a>
+                </div>
+                <button class="result-restart" id="q-restart">↺ Retake the check-in</button>
+            </div>
+
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="index.html" class="logo" style="margin-bottom: 18px;">
+                        <div class="logo-mark">A</div>
+                        <div class="logo-text">Anantnag Youth Portal<span>District Administration · J&K</span></div>
+                    </a>
+                    <p style="font-size: .92rem; max-width: 300px;">A Counselling & Youth Development initiative
+                        connecting students, institutions and administration of Anantnag district.</p>
+                </div>
+                <div>
+                    <h4>Portal</h4>
+                    <ul>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="services.html">Services Offered</a></li>
+                        <li><a href="career.html">Programs</a></li>
+                        <li><a href="events.html">Events & Talent</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="contact.html">Contact Us</a></li>
+                        <li><a href="book-appointment.html">Book Appointment</a></li>
+                        <li><a href="about.html">For Institutions</a></li>
+                        <li><a href="about.html">For Alumni</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Reach Us</h4>
+                    <ul>
+                        <li>Counselling & Youth Development Center</li>
+                        <li>District Administration, Anantnag</li>
+                        <li>Jammu & Kashmir</li>
+                        <li><a href="mailto:info@anantnagyouth.in">info@anantnagyouth.in</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 District Administration, Anantnag. All rights reserved.</span>
+                <div class="lang-pills"><span>English</span><span>हिंदी</span><span>اردو</span></div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+    <script>
+        /* ===== Wellness check-in — one question at a time ===== */
+        const QUESTIONS = [
+            {
+                dim: 'Academic Stress',
+                q: 'How well are you currently managing academic or exam-related stress?',
+                options: [
+                    { t: 'Doing great — I feel relaxed and well-prepared.', v: 3 },
+                    { t: 'Doing OK — I get stressed sometimes but manage it.', v: 2 },
+                    { t: 'Struggling — the academic pressure is building up.', v: 1 },
+                    { t: "Overwhelmed — I'm finding it hard to cope with studies.", v: 0 },
+                ]
+            },
+            {
+                dim: 'Career Direction',
+                q: 'Are you confident about your future academic stream or career direction?',
+                options: [
+                    { t: 'Very confident — I know exactly what pathways I want.', v: 3 },
+                    { t: 'A decent idea — I have options but need details.', v: 2 },
+                    { t: 'Confused — I am torn between different avenues.', v: 1 },
+                    { t: 'Lost — I have no clear plan or information yet.', v: 0 },
+                ]
+            },
+            {
+                dim: 'Focus & Time',
+                q: 'How is your overall focus, concentration and time management?',
+                options: [
+                    { t: 'Highly focused — I manage my routine efficiently.', v: 3 },
+                    { t: 'Mostly good — distractions happen, but work gets done.', v: 2 },
+                    { t: 'Hard to concentrate — habits get in the way.', v: 1 },
+                    { t: 'Disorganised — I feel behind and hard to start.', v: 0 },
+                ]
+            },
+            {
+                dim: 'Support System',
+                q: 'Do you have a supportive person (family, teacher or friend) to talk to?',
+                options: [
+                    { t: 'Yes, absolutely — I can share my concerns anytime.', v: 3 },
+                    { t: "Sometimes — they don't always understand.", v: 2 },
+                    { t: 'Hardly — I feel mostly on my own.', v: 1 },
+                    { t: 'No one — I keep issues to myself.', v: 0 },
+                ]
+            },
+            {
+                dim: 'Sleep & Energy',
+                q: 'How has your sleep quality and energy been over the past two weeks?',
+                options: [
+                    { t: 'Great — sound sleep and refreshed during the day.', v: 3 },
+                    { t: 'Normal — occasionally tired, but mostly fine.', v: 2 },
+                    { t: 'Restless — hard to sleep due to stress or thoughts.', v: 1 },
+                    { t: 'Exhausted — sleep-deprived or anxious at night.', v: 0 },
+                ]
+            },
+        ];
+
+        const answers = new Array(QUESTIONS.length).fill(null);
+        let current = 0;
+
+        const stage = document.getElementById('quiz-stage');
+        const stepEl = document.getElementById('q-step');
+        const dimEl = document.getElementById('q-dim');
+        const fillEl = document.getElementById('q-fill');
+        const backBtn = document.getElementById('q-back');
+        const nextBtn = document.getElementById('q-next');
+        const shell = document.getElementById('quiz-shell');
+        const resultBox = document.getElementById('quiz-result');
+
+        const tick = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+        function render() {
+            const item = QUESTIONS[current];
+            stepEl.textContent = `Question ${current + 1} of ${QUESTIONS.length}`;
+            dimEl.textContent = item.dim;
+            fillEl.style.width = ((current + 1) / QUESTIONS.length * 100) + '%';
+
+            let html = '<div class="quiz-question"><h2 class="quiz-q">' + item.q + '</h2><div class="quiz-options">';
+            item.options.forEach((o, i) => {
+                const sel = answers[current] === o.v ? ' selected' : '';
+                html += `<button type="button" class="quiz-option${sel}" data-value="${o.v}" data-idx="${i}">
+                    <span class="qo-mark">${tick}</span><span>${o.t}</span></button>`;
+            });
+            html += '</div></div>';
+            stage.innerHTML = html;
+
+            stage.querySelectorAll('.quiz-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    answers[current] = parseInt(btn.dataset.value, 10);
+                    stage.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    nextBtn.disabled = false;
+                });
+            });
+
+            backBtn.classList.toggle('show', current > 0);
+            nextBtn.disabled = answers[current] === null;
+            nextBtn.textContent = current === QUESTIONS.length - 1 ? 'See My Result →' : 'Next →';
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (answers[current] === null) return;
+            if (current < QUESTIONS.length - 1) {
+                current++;
+                render();
+                shell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                showResult();
+            }
+        });
+
+        backBtn.addEventListener('click', () => {
+            if (current > 0) { current--; render(); }
+        });
+
+        function showResult() {
+            const score = answers.reduce((a, b) => a + b, 0);
+            shell.style.display = 'none';
+            resultBox.classList.add('show');
+            resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // animate number + meter
+            const scoreEl = document.getElementById('meter-score');
+            const meterFill = document.getElementById('meter-fill');
+            const circ = 471; // 2πr, r=75
+            const pct = score / 15;
+
+            let colour = '#5B8A5A';
+            if (score < 7) colour = '#C87456';
+            else if (score < 12) colour = '#E0A93B';
+            meterFill.style.stroke = colour;
+            document.querySelector('.meter .center b').style.color = colour;
+
+            setTimeout(() => {
+                meterFill.style.strokeDashoffset = circ - (circ * pct);
+            }, 150);
+
+            let n = 0;
+            const step = Math.max(1, Math.round(score / 20));
+            const counter = setInterval(() => {
+                n += step;
+                if (n >= score) { n = score; clearInterval(counter); }
+                scoreEl.textContent = n;
+            }, 45);
+
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-desc');
+
+            if (score >= 12) {
+                title.textContent = 'You’re in a Good Place';
+                desc.textContent = "You feel mostly confident, focused and stress-resilient, with healthy routines and support around you. Keep it up — challenge yourself, join talent showcases, and explore the career programs on the portal to keep growing.";
+            } else if (score >= 7) {
+                title.textContent = 'Doing OK — Room to Balance';
+                desc.textContent = "You handle most hurdles, but exams, direction or sleep occasionally weigh on you. A little structure and guidance can go a long way. Consider exploring our career guidance or a short chat with an adviser.";
+            } else {
+                title.textContent = 'It’s Worth Reaching Out';
+                desc.textContent = "You seem to be carrying a heavy load right now — stress, doubt or sleeplessness can be exhausting. You don’t have to face it alone. We warmly encourage booking a free, confidential counselling session today.";
+            }
+        }
+
+        document.getElementById('q-restart').addEventListener('click', () => {
+            answers.fill(null);
+            current = 0;
+            resultBox.classList.remove('show');
+            document.getElementById('meter-fill').style.strokeDashoffset = 471;
+            shell.style.display = 'block';
+            render();
+            shell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        render();
+    </script>
+</body>
+
+</html>
