@@ -48,6 +48,13 @@ select:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--terracotta); outline-offset: 3px; border-radius: 4px;
 }
 
+/* ---- Gallery page: photos fill the full tile width, anchored to the top so the
+   heads/top of each photo are never cropped (only a little of the bottom trims). ---- */
+.gallery-grid .img-frame img {
+  object-fit: cover;
+  object-position: center top;
+}
+
 /* ---- Gentle zoom on opt-in images (never touches the existing .card component) ---- */
 .img-zoom { overflow: hidden; }
 .img-zoom img { transition: transform .8s var(--ease); }
