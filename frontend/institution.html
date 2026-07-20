@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Institution Dashboard — Anantnag Youth Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+  <script src="assets/js/portal-auth.js"></script>
+  <script src="assets/js/dashboard-core.js"></script>
+  <script>
+  (function () {
+    var D = window.DASH, api = D.api, esc = D.esc, toast = D.toast;
+    var main = function () { return document.getElementById('dash-main'); };
+
+    D.boot({
+      role: 'institution',
+      title: 'Institution Panel',
+      sections: [
+        { id: 'students', label: 'Students', icon: 'users', group: 'Manage' },
+        { id: 'notices', label: 'Notices', icon: 'bell', group: 'Manage' },
+        { id: 'events', label: 'Events', icon: 'calendar', group: 'Manage' },
+        { id: 'gallery', label: 'Gallery & Video', icon: 'image', group: 'Manage' },
+        { id: 'counselling', label: 'Counselling', icon: 'heart', group: 'Overview' },
+        { id: 'alerts', label: 'Alerts', icon: 'megaphone', badge: true, group: 'Overview' },
+      ],
+      onSection: render,
+    }).then(function () { D.refreshAlertBadge('alerts'); });
+    function render(id) { ({ students: students, notices: notices, events: events, gallery: gallery, counselling: counselling, alerts: function () { D.alertsView('alerts'); } }[id] || students)(); }
+
+    async function students() {
+      main().innerHTML = '<h1 class="dash-h">Students</h1><p class="dash-sub">Manage your institution\'s students.</p>'
+        + '<div class="card"><h3>Add student</h3><form id="sF"><div class="f f-row">'
+        + '<div><label>Full name</label><input name="fullName" required></div><div><label>Email</label><input type="email" name="email" required></div>'
+        + '<div><label>Class / Year</label><input name="classYear"></div><div><label>Temp password</label><input name="password" minlength="8" required></div>'
+        + '</div><button class="dash-btn" type="submit">Add student</button></form></div>'
+        + '<div class="card"><div class="tbl-wrap"><table class="tbl" id="sTbl"><tbody><tr><td>Loading…</td></tr></tbody></table></div></div>';
+      document.getElementById('sF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { await api('/api/institution/students', { method: 'POST', body: { fullName: f.fullName.value, email: f.email.value, classYear: f.classYear.value, password: f.password.value } }); toast('Student added.'); f.reset(); loadStudents(); } catch (ex) { toast(ex.message, true); } });
+      loadStudents();
+    }
+    async function loadStudents() {
+      var rows = await api('/api/institutions/me/students');
+      document.querySelector('#sTbl').innerHTML = '<thead><tr><th>Name</th><th>Email</th><th>Class</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
+        + (rows.length ? rows.map(function (s) {
+          return '<tr><td>' + esc(s.full_name) + '</td><td>' + esc(s.email) + '</td><td>' + esc(s.class_year || '—') + '</td><td>'
+            + (s.is_verified ? '<span class="pill green">Verified</span>' : '<span class="pill amber">Unverified</span>') + '</td>'
+            + '<td class="row-actions">' + (s.is_verified ? '' : '<button class="dash-btn sm" data-verify="' + s.id + '">Verify</button>')
+            + '<button class="dash-btn sm danger" data-del="' + s.id + '">Remove</button></td></tr>';
+        }).join('') : '<tr><td colspan="5" class="empty">No students yet.</td></tr>') + '</tbody>';
+      document.querySelectorAll('#sTbl [data-verify]').forEach(function (b) { b.onclick = async function () { try { await api('/api/institution/students/' + b.dataset.verify + '/verify', { method: 'PUT' }); toast('Verified.'); loadStudents(); } catch (ex) { toast(ex.message, true); } }; });
+      document.querySelectorAll('#sTbl [data-del]').forEach(function (b) { b.onclick = async function () { if (!confirm('Remove this student?')) return; try { await api('/api/institution/students/' + b.dataset.del, { method: 'DELETE' }); toast('Removed.'); loadStudents(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    async function notices() {
+      main().innerHTML = '<h1 class="dash-h">Notices</h1><p class="dash-sub">Posted to your students.</p>'
+        + '<div class="card"><h3>Post notice</h3><form id="nF"><div class="f" style="margin-bottom:10px"><label>Title</label><input name="title" required></div><div class="f" style="margin-bottom:13px"><label>Body</label><textarea name="body" required></textarea></div><button class="dash-btn" type="submit">Post</button></form></div><div id="nl"></div>';
+      document.getElementById('nF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { var fd = new FormData(); fd.append('title', f.title.value); fd.append('body', f.body.value); await api('/api/notices', { method: 'POST', body: fd }); toast('Posted.'); f.reset(); loadNotices(); } catch (ex) { toast(ex.message, true); } });
+      loadNotices();
+    }
+    async function loadNotices() {
+      var rows = await api('/api/notices');
+      document.getElementById('nl').innerHTML = rows.map(function (n) { return '<div class="item"><div class="grow"><h4>' + esc(n.title) + '</h4><p>' + esc(n.body) + '</p><div class="meta">' + D.fmtDate(n.created_at) + '</div></div>' + (n.institution_name ? '<button class="dash-btn sm danger" data-del="' + n.id + '">Delete</button>' : '') + '</div>'; }).join('') || '<div class="empty">No notices.</div>';
+      document.querySelectorAll('#nl [data-del]').forEach(function (b) { b.onclick = async function () { try { await api('/api/notices/' + b.dataset.del, { method: 'DELETE' }); toast('Deleted.'); loadNotices(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    async function events() {
+      main().innerHTML = '<h1 class="dash-h">Events</h1><p class="dash-sub">Create events for your students and track attendance.</p>'
+        + '<div class="card"><h3>Create event</h3><form id="eF"><div class="f f-row"><div><label>Title</label><input name="title" required></div><div><label>Category</label><select name="category"><option>event</option><option>competition</option><option>workshop</option><option>awareness</option></select></div><div><label>Date</label><input type="date" name="startsAtDate" required></div><div><label>Time</label><input type="time" name="startsAtTime" required></div><div><label>Venue</label><input name="venue"></div><div><label>Capacity (blank=∞)</label><input type="number" name="capacity"></div></div><div class="f" style="margin-bottom:13px"><label>Description</label><textarea name="description"></textarea></div><button class="dash-btn" type="submit">Create</button></form></div><div id="el"></div>';
+      document.getElementById('eF').addEventListener('submit', async function (e) {
+        e.preventDefault(); var f = e.target;
+        try {
+          var body = { title: f.title.value, category: f.category.value, startsAt: D.dtValue(f, 'startsAt'), venue: f.venue.value, description: f.description.value };
+          if (f.capacity.value) body.capacity = f.capacity.value;
+          await api('/api/events', { method: 'POST', body: body });
+          toast('Created.'); f.reset(); loadEvents();
+        } catch (ex) { toast(ex.message, true); }
+      });
+      loadEvents();
+    }
+    async function loadEvents() {
+      var rows = await api('/api/events');
+      var mine = rows.filter(function (e) { return e.institution_name; });
+      document.getElementById('el').innerHTML = rows.map(function (e) {
+        return '<div class="item"><div class="grow"><h4>' + esc(e.title) + ' <span class="pill grey">' + esc(e.category) + '</span></h4><div class="meta">' + D.fmtDateTime(e.starts_at) + ' · ' + e.registered_count + ' registered</div></div>'
+          + (e.institution_name ? '<div class="row-actions"><button class="dash-btn sm" data-roster="' + e.id + '">Attendance</button><button class="dash-btn sm danger" data-del="' + e.id + '">Delete</button></div>' : '') + '</div><div data-roster-panel="' + e.id + '"></div>';
+      }).join('') || '<div class="empty">No events.</div>';
+      document.querySelectorAll('#el [data-del]').forEach(function (b) { b.onclick = async function () { if (!confirm('Delete event?')) return; try { await api('/api/events/' + b.dataset.del, { method: 'DELETE' }); toast('Deleted.'); loadEvents(); } catch (ex) { toast(ex.message, true); } }; });
+      document.querySelectorAll('#el [data-roster]').forEach(function (b) { b.onclick = function () { roster(b.dataset.roster); }; });
+    }
+    async function roster(id) {
+      var panel = document.querySelector('[data-roster-panel="' + id + '"]');
+      var rows = await api('/api/events/' + id + '/registrations');
+      panel.innerHTML = '<div class="card"><h3>Attendance</h3>' + (rows.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Class</th><th>Attended</th></tr></thead><tbody>'
+        + rows.map(function (r) { return '<tr><td>' + esc(r.full_name) + '</td><td>' + esc(r.class_year || '—') + '</td><td><button class="dash-btn sm ' + (r.attended ? '' : 'ghost') + '" style="' + (r.attended ? '' : 'color:var(--green);border-color:var(--sage)') + '" data-att="' + id + ':' + r.user_id + '">' + (r.attended ? 'Present ✓' : 'Mark') + '</button></td></tr>'; }).join('')
+        + '</tbody></table></div>' : '<div class="empty">No registrations.</div>') + '</div>';
+      panel.querySelectorAll('[data-att]').forEach(function (b) { b.onclick = async function () { var p = b.dataset.att.split(':'); try { await api('/api/events/' + p[0] + '/registrations/' + p[1] + '/attend', { method: 'PUT' }); roster(id); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    // Gallery & Video (PDF §5.4) — institutions upload event media; theirs publishes directly.
+    var MEDIA = (window.PORTAL_API_BASE || '').replace(/\/$/, '');
+    async function gallery() {
+      main().innerHTML = '<h1 class="dash-h">Gallery &amp; Video</h1><p class="dash-sub">Upload photos and videos of your institution\'s events and activities.</p>'
+        + '<div class="card"><h3>Upload media</h3><form id="gF">'
+        + '<div class="f f-row"><div><label>Title*</label><input name="title" required></div>'
+        + '<div><label>Caption (optional)</label><input name="caption"></div></div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Photo or video*</label><input type="file" name="file" accept="image/*,video/*" required></div>'
+        + '<button class="dash-btn" type="submit">Upload</button></form></div>'
+        + '<div class="card"><h3>Published media</h3><div id="gl" class="media-grid"><div class="empty">Loading…</div></div></div>';
+      document.getElementById('gF').addEventListener('submit', async function (e) {
+        e.preventDefault(); var f = e.target;
+        if (!f.file.files.length) return;
+        var isVideo = (f.file.files[0].type || '').indexOf('video/') === 0;
+        var fd = new FormData();
+        fd.append('title', f.title.value); if (f.caption.value) fd.append('caption', f.caption.value);
+        fd.append('file', f.file.files[0]);
+        try { await api('/api/gallery/' + (isVideo ? 'videos' : 'gallery'), { method: 'POST', body: fd }); toast('Uploaded.'); f.reset(); loadGallery(); }
+        catch (ex) { toast(ex.message, true); }
+      });
+      loadGallery();
+    }
+    async function loadGallery() {
+      var rows = await api('/api/gallery');
+      document.getElementById('gl').innerHTML = rows.length ? rows.map(function (x) {
+        var src = MEDIA + x.file_path;
+        var thumb = x.media_type === 'video'
+          ? '<video src="' + esc(src) + '" controls style="width:100%;height:160px;object-fit:cover;background:#000"></video>'
+          : '<a href="' + esc(src) + '" target="_blank" rel="noopener"><img src="' + esc(src) + '" alt="' + esc(x.title) + '" loading="lazy" style="width:100%;height:160px;object-fit:cover"></a>';
+        return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:0">' + thumb
+          + '<div style="padding:11px 13px"><h4 style="margin:0;color:var(--green);font-size:.9rem">' + esc(x.title) + '</h4>'
+          + (x.caption ? '<p style="margin:4px 0 0;font-size:.78rem;opacity:.75">' + esc(x.caption) + '</p>' : '')
+          + '<div class="meta" style="font-size:.7rem;opacity:.6;margin-top:6px">' + esc(x.uploader_name || '—') + (x.institution_name ? ' · ' + esc(x.institution_name) : '') + '</div>'
+          + '<div class="row-actions" style="margin-top:9px"><button class="dash-btn sm danger" data-del="' + x.id + '">Delete</button></div></div></div>';
+      }).join('') : '<div class="empty">No media uploaded yet.</div>';
+      document.querySelectorAll('#gl [data-del]').forEach(function (b) { b.onclick = async function () { if (!confirm('Delete this media item?')) return; try { await api('/api/gallery/' + b.dataset.del, { method: 'DELETE' }); toast('Deleted.'); loadGallery(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    async function counselling() {
+      main().innerHTML = '<h1 class="dash-h">Counselling Overview</h1><p class="dash-sub">Counselling activity for your students (status only — notes stay confidential to the Centre).</p><div id="cl"><div class="empty">Loading…</div></div>';
+      // Institutions don't have a dedicated endpoint into confidential records by design;
+      // they see participation via the reports the district shares. Show a gentle explainer.
+      document.getElementById('cl').innerHTML = '<div class="card"><p style="font-size:.9rem;line-height:1.6">To protect student privacy (PDF §5.14), individual counselling details are visible only to the Counselling Centre and District Administration. Aggregate participation for your institution appears in the district\'s institution-wise report.</p></div>';
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alumni Dashboard — Anantnag Youth Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+  <script src="assets/js/portal-auth.js"></script>
+  <script src="assets/js/dashboard-core.js"></script>
+  <script>
+  (function () {
+    var D = window.DASH, api = D.api, esc = D.esc, toast = D.toast;
+    var main = function () { return document.getElementById('dash-main'); };
+    var institutions = [];
+
+    D.boot({
+      role: 'alumni',
+      title: 'Alumni',
+      sections: [
+        { id: 'profile', label: 'My Profile', icon: 'user', group: 'My account' },
+        { id: 'directory', label: 'Alumni Network', icon: 'users', group: 'Connect' },
+        { id: 'discussions', label: 'Mentor Students', icon: 'message', group: 'Connect' },
+        { id: 'alerts', label: 'Alerts', icon: 'megaphone', badge: true, group: 'Connect' },
+      ],
+      onSection: render,
+    }).then(function () { D.refreshAlertBadge('alerts'); });
+    function render(id) { ({ profile: profile, directory: directory, discussions: discussions, alerts: function () { D.alertsView('alerts'); } }[id] || profile)(); }
+
+    async function profile() {
+      main().innerHTML = '<h1 class="dash-h">My Alumni Profile</h1><p class="dash-sub">Complete your profile so students can find you as a mentor (PDF §5.10). New profiles are approved before appearing publicly.</p><div class="card"><div id="pForm"><div class="empty">Loading…</div></div></div>';
+      if (!institutions.length) { try { institutions = await api('/api/institutions'); } catch (e) {} }
+      var p = await api('/api/alumni/me');
+      var opts = institutions.map(function (i) { return '<option value="' + i.id + '"' + (p && p.institution_id === i.id ? ' selected' : '') + '>' + esc(i.name) + '</option>'; }).join('');
+      document.getElementById('pForm').innerHTML = '<form id="pF">'
+        + '<div class="f f-row"><div><label>Institution</label><select name="institutionId"><option value="">Select…</option>' + opts + '</select></div>'
+        + '<div><label>Graduation year</label><input type="number" name="graduationYear" value="' + esc(p && p.graduation_year || '') + '"></div>'
+        + '<div><label>Occupation</label><input name="occupation" value="' + esc(p && p.occupation || '') + '"></div>'
+        + '<div><label>Organisation</label><input name="organisation" value="' + esc(p && p.organisation || '') + '"></div></div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Expertise (what can you mentor on?)</label><textarea name="expertise">' + esc(p && p.expertise || '') + '</textarea></div>'
+        + '<div class="f f-row"><div><label>LinkedIn</label><input name="linkedinUrl" value="' + esc(p && p.linkedin_url || '') + '"></div>'
+        + '<div><label>Open to mentoring?</label><select name="openToMentor"><option value="true"' + (!p || p.open_to_mentor ? ' selected' : '') + '>Yes</option><option value="false"' + (p && !p.open_to_mentor ? ' selected' : '') + '>Not right now</option></select></div></div>'
+        + '<button class="dash-btn" type="submit">Save profile</button> ' + (p ? (p.is_approved ? '<span class="pill green">Approved</span>' : '<span class="pill amber">Pending approval</span>') : '') + '</form>';
+      document.getElementById('pF').addEventListener('submit', async function (e) {
+        e.preventDefault(); var f = e.target;
+        try { await api('/api/alumni/me', { method: 'PUT', body: { institutionId: f.institutionId.value || null, graduationYear: f.graduationYear.value || null, occupation: f.occupation.value, organisation: f.organisation.value, expertise: f.expertise.value, linkedinUrl: f.linkedinUrl.value, openToMentor: f.openToMentor.value === 'true' } }); toast('Profile saved.'); profile(); }
+        catch (ex) { toast(ex.message, true); }
+      });
+    }
+
+    async function directory() {
+      main().innerHTML = '<h1 class="dash-h">Alumni Network</h1><p class="dash-sub">Other alumni across the district.</p><div id="dl"><div class="empty">Loading…</div></div>';
+      var rows = await api('/api/alumni?mentorsOnly=1');
+      document.getElementById('dl').innerHTML = rows.map(function (a) { return '<div class="item"><div class="grow"><h4>' + esc(a.full_name) + '</h4><p>' + esc(a.occupation || '') + (a.organisation ? ' · ' + esc(a.organisation) : '') + '</p><div class="meta">' + esc(a.institution_name || '') + (a.graduation_year ? ' · Class of ' + a.graduation_year : '') + (a.expertise ? ' · ' + esc(a.expertise) : '') + '</div></div></div>'; }).join('') || '<div class="empty">No alumni listed yet.</div>';
+    }
+
+    async function discussions() {
+      main().innerHTML = '<h1 class="dash-h">Mentor Students</h1><p class="dash-sub">Answer students\' questions on the discussion board.</p><div id="dl"><div class="empty">Loading…</div></div>';
+      var rows = await api('/api/discussions');
+      document.getElementById('dl').innerHTML = rows.map(function (d) {
+        return '<div class="item"><div class="grow"><h4>' + esc(d.title) + '</h4><p>' + esc(d.body) + '</p><div class="meta">' + esc(d.author_name) + ' · ' + d.reply_count + ' replies</div>'
+          + '<div style="margin-top:8px"><input placeholder="Share your guidance…" data-ri="' + d.id + '" style="width:70%;padding:7px 11px;border:1.5px solid var(--sage);border-radius:9px"> <button class="dash-btn sm" data-reply="' + d.id + '">Reply</button></div></div></div>';
+      }).join('') || '<div class="empty">No discussions yet.</div>';
+      document.querySelectorAll('[data-reply]').forEach(function (b) { b.onclick = async function () { var inp = document.querySelector('[data-ri="' + b.dataset.reply + '"]'); if (!inp.value.trim()) return; try { await api('/api/discussions/' + b.dataset.reply + '/replies', { method: 'POST', body: { body: inp.value } }); toast('Replied.'); discussions(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+  })();
+  </script>
+</body>
+</html>

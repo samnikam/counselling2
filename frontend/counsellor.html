@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Counsellor Dashboard — Anantnag Youth Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+  <script src="assets/js/portal-auth.js"></script>
+  <script src="assets/js/dashboard-core.js"></script>
+  <script>
+  (function () {
+    var D = window.DASH, api = D.api, esc = D.esc, toast = D.toast;
+    var main = function () { return document.getElementById('dash-main'); };
+
+    D.boot({
+      role: 'counsellor',
+      title: 'Counselling Centre',
+      sections: [
+        { id: 'requests', label: 'Requests', icon: 'clipboard', group: 'Counselling' },
+        { id: 'mine', label: 'Assigned to me', icon: 'user', group: 'Counselling' },
+        { id: 'career', label: 'Career Resources', icon: 'compass', group: 'Guidance' },
+        { id: 'discussions', label: 'Discussions', icon: 'message', group: 'Guidance' },
+        { id: 'alerts', label: 'Alerts', icon: 'megaphone', badge: true, group: 'Guidance' },
+      ],
+      onSection: render,
+    }).then(function () { D.refreshAlertBadge('alerts'); });
+    function render(id) { ({ requests: function () { list(''); }, mine: function () { list('?mine=1'); }, career: career, discussions: discussions, alerts: function () { D.alertsView('alerts'); } }[id] || function () { list(''); })(); }
+
+    async function list(query) {
+      main().innerHTML = '<h1 class="dash-h">Counselling Requests</h1><p class="dash-sub">Confidential — for Counselling Centre staff only.</p>'
+        + '<div style="margin-bottom:14px"><select id="statusF" class="dash-btn ghost" style="color:var(--green);border-color:var(--sage)"><option value="">All statuses</option><option>pending</option><option>assigned</option><option>scheduled</option><option>completed</option></select></div><div id="cl"><div class="empty">Loading…</div></div>';
+      document.getElementById('statusF').onchange = function () { loadList(query, this.value); };
+      loadList(query, '');
+    }
+    async function loadList(query, status) {
+      var q = query + (query ? '&' : '?') + (status ? 'status=' + status : '');
+      var rows = await api('/api/counselling' + q);
+      var pill = { pending: 'amber', assigned: 'green', scheduled: 'green', completed: 'grey', cancelled: 'red' };
+      document.getElementById('cl').innerHTML = rows.map(function (r) {
+        var who = r.student_name || r.guest_name || 'Anonymous';
+        return '<div class="card"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:200px"><h3 style="margin-bottom:6px">' + esc(who) + ' — ' + esc(r.request_type) + ' <span class="pill ' + (pill[r.status] || 'grey') + '">' + esc(r.status) + '</span></h3>'
+          + '<p style="font-size:.86rem;white-space:pre-line">' + esc(r.description || 'No details.') + '</p>'
+          + '<div class="meta" style="font-size:.74rem;opacity:.7;margin-top:6px">' + esc(r.institution_name || 'Guest') + ' · ' + D.fmtDateTime(r.created_at)
+          + (r.student_phone ? ' · ☎ ' + esc(r.student_phone) : (r.guest_phone ? ' · ☎ ' + esc(r.guest_phone) : '')) + (r.preferred_language ? ' · ' + esc(r.preferred_language) : '') + '</div></div>'
+          + '<div><select data-status="' + r.id + '" style="font-size:.76rem;padding:6px;border:1.5px solid var(--sage);border-radius:8px">' + ['pending', 'assigned', 'scheduled', 'completed', 'cancelled'].map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div></div>'
+          + '<div class="f" style="margin-top:12px"><label>Session notes (private)</label><textarea data-notes="' + r.id + '">' + esc(r.session_notes || '') + '</textarea><button class="dash-btn sm" style="margin-top:8px" data-save="' + r.id + '">Save notes</button></div></div>';
+      }).join('') || '<div class="empty">No requests.</div>';
+      document.querySelectorAll('[data-status]').forEach(function (s) { s.onchange = async function () { try { await api('/api/counselling/' + s.dataset.status, { method: 'PUT', body: { status: s.value } }); toast('Updated.'); } catch (ex) { toast(ex.message, true); } }; });
+      document.querySelectorAll('[data-save]').forEach(function (b) { b.onclick = async function () { var t = document.querySelector('[data-notes="' + b.dataset.save + '"]'); try { await api('/api/counselling/' + b.dataset.save, { method: 'PUT', body: { sessionNotes: t.value } }); toast('Notes saved.'); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    async function career() {
+      main().innerHTML = '<h1 class="dash-h">Career Resources</h1><p class="dash-sub">Publish guidance resources and sessions (PDF §5.8).</p>'
+        + '<div class="card"><h3>Add resource</h3><form id="rF"><div class="f f-row"><div><label>Title</label><input name="title" required></div><div><label>Category</label><input name="category"></div><div><label>Link</label><input name="linkUrl" placeholder="https://…"></div></div><div class="f" style="margin-bottom:13px"><label>Description</label><textarea name="description"></textarea></div><button class="dash-btn" type="submit">Add</button></form></div>'
+        + '<div class="card"><h3>Add guidance session</h3><form id="sF"><div class="f f-row"><div><label>Title</label><input name="title" required></div><div><label>Speaker</label><input name="speaker"></div><div><label>Date</label><input type="date" name="startsAtDate" required></div><div><label>Time</label><input type="time" name="startsAtTime" required></div><div><label>Venue</label><input name="venue"></div></div><button class="dash-btn" type="submit">Add session</button></form></div>'
+        + '<div id="rl"></div>';
+      document.getElementById('rF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { var fd = new FormData(); ['title', 'category', 'linkUrl', 'description'].forEach(function (k) { if (f[k].value) fd.append(k, f[k].value); }); await api('/api/career/resources', { method: 'POST', body: fd }); toast('Added.'); f.reset(); loadCareer(); } catch (ex) { toast(ex.message, true); } });
+      document.getElementById('sF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { await api('/api/career/sessions', { method: 'POST', body: { title: f.title.value, speaker: f.speaker.value, startsAt: D.dtValue(f, 'startsAt'), venue: f.venue.value } }); toast('Added.'); f.reset(); loadCareer(); } catch (ex) { toast(ex.message, true); } });
+      loadCareer();
+    }
+    async function loadCareer() {
+      var r = await api('/api/career/resources');
+      document.getElementById('rl').innerHTML = '<div class="card"><h3>Resources</h3>' + (r.map(function (x) { return '<div class="item"><div class="grow"><h4>' + esc(x.title) + '</h4><p>' + esc(x.description || '') + '</p></div><button class="dash-btn sm danger" data-del="' + x.id + '">Delete</button></div>'; }).join('') || '<div class="empty">None yet.</div>') + '</div>';
+      document.querySelectorAll('#rl [data-del]').forEach(function (b) { b.onclick = async function () { try { await api('/api/career/resources/' + b.dataset.del, { method: 'DELETE' }); toast('Deleted.'); loadCareer(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    async function discussions() {
+      main().innerHTML = '<h1 class="dash-h">Discussions</h1><p class="dash-sub">Moderate the student discussion board.</p><div id="dl"><div class="empty">Loading…</div></div>';
+      var rows = await api('/api/discussions');
+      document.getElementById('dl').innerHTML = rows.map(function (d) { return '<div class="item"><div class="grow"><h4>' + esc(d.title) + '</h4><p>' + esc(d.body) + '</p><div class="meta">' + esc(d.author_name) + ' · ' + d.reply_count + ' replies</div></div><button class="dash-btn sm danger" data-del="' + d.id + '">Remove</button></div>'; }).join('') || '<div class="empty">No discussions.</div>';
+      document.querySelectorAll('#dl [data-del]').forEach(function (b) { b.onclick = async function () { if (!confirm('Remove this discussion?')) return; try { await api('/api/discussions/' + b.dataset.del, { method: 'DELETE' }); toast('Removed.'); discussions(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Anantnag Youth Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+  <script src="assets/js/portal-auth.js"></script>
+  <script src="assets/js/dashboard-core.js"></script>
+  <script>
+  (function () {
+    var D = window.DASH, api = D.api, esc = D.esc, toast = D.toast;
+    var main = function () { return document.getElementById('dash-main'); };
+    var instCache = [];
+
+    D.boot({
+      role: 'admin',
+      title: 'District Administration',
+      sections: [
+        { id: 'dashboard',   label: 'Dashboard',           icon: 'grid',      group: 'Overview' },
+        { id: 'users',       label: 'Students & Users',     icon: 'users',     group: 'People' },
+        { id: 'institutions',label: 'Institutions',         icon: 'building',  group: 'People' },
+        { id: 'counsellors', label: 'Counsellors',          icon: 'heart',     group: 'People' },
+        { id: 'alumni',      label: 'Alumni',               icon: 'cap',       group: 'People' },
+        { id: 'notices',     label: 'Notices',              icon: 'bell',      group: 'Content' },
+        { id: 'events',      label: 'Events',               icon: 'calendar',  group: 'Content' },
+        { id: 'counselling', label: 'Counselling Requests', icon: 'chat',      group: 'Content' },
+        { id: 'discussions', label: 'Discussions',          icon: 'message',   group: 'Content' },
+        { id: 'career',      label: 'Career Guidance',      icon: 'compass',   group: 'Content' },
+        { id: 'talent',      label: 'Talent Showcase',      icon: 'star',      group: 'Content' },
+        { id: 'gallery',     label: 'Gallery & Video',      icon: 'image',     group: 'Content' },
+        { id: 'notifications', label: 'Notifications',      icon: 'megaphone', group: 'Broadcast' },
+        { id: 'reports',     label: 'Reports',              icon: 'chart',     group: 'Insights' },
+        { id: 'activity',    label: 'Activity Log',         icon: 'activity',  group: 'Insights' },
+        { id: 'settings',    label: 'Settings',             icon: 'gear',      group: 'System' },
+      ],
+      onSection: render,
+    });
+
+    var VIEWS = {
+      dashboard: dashboard, users: users, institutions: institutions, counsellors: counsellors,
+      alumni: alumni, notices: notices, events: events, counselling: counselling,
+      discussions: discussions, career: career, talent: talent, gallery: gallery, notifications: notifications,
+      reports: reports, activity: activity, settings: settings,
+    };
+    function render(id) { (VIEWS[id] || dashboard)(); }
+
+    // Wires the "+" button created by D.header()
+    function onAdd(fn) { var b = document.getElementById('dash-add'); if (b) b.onclick = fn; }
+    function bar(label, count, max) {
+      return '<div class="chart-row"><div class="cl"><span>' + esc(label) + '</span><b>' + count + '</b></div>'
+        + '<div class="cb"><div class="cf" style="width:' + (max ? (count / max * 100) : 0) + '%"></div></div></div>';
+    }
+    async function institutionOptions() {
+      if (!instCache.length) instCache = await api('/api/institutions');
+      return instCache.map(function (i) { return '<option value="' + i.id + '">' + esc(i.name) + '</option>'; }).join('');
+    }
+
+    // ─── DASHBOARD ───
+    async function dashboard() {
+      main().innerHTML = D.header('District Dashboard', 'Live snapshot across all institutions.')
+        + '<div id="st"><div class="empty">Loading…</div></div>'
+        + '<div class="card"><h3>Counselling requests by type</h3><div id="cbt"></div></div>'
+        + '<div class="card"><h3>Top institutions by students</h3><div id="topi"></div></div>';
+      var s = await api('/api/admin/stats');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Students', s.students, ''], ['Institutions', s.institutions, 'c3'],
+        ['Counsellors', s.counsellors, 'c5'], ['Alumni', s.alumni, 'c4'],
+        ['Events', s.events, 'c3'], ['Event sign-ups', s.eventParticipation, ''],
+        ['Counselling total', s.counsellingTotal, 'c2'], ['Pending counselling', s.counsellingPending, 'c2'],
+        ['Discussions', s.discussions, 'c5'],
+      ]);
+      var cbt = await api('/api/admin/stats/counselling-by-type');
+      var L = { stress: 'Stress', mental_health: 'Psychological', career: 'Career', academic: 'Academic', personal: 'Personal', other: 'Other' };
+      var mx = Math.max.apply(null, cbt.map(function (r) { return r.count; }).concat([1]));
+      document.getElementById('cbt').innerHTML = cbt.length
+        ? cbt.map(function (r) { return bar(L[r.request_type] || r.request_type, r.count, mx); }).join('')
+        : '<div class="empty">No counselling requests yet.</div>';
+      var rep = (await api('/api/admin/reports/institutions')).filter(function (r) { return r.students > 0; }).slice(0, 8);
+      var mx2 = Math.max.apply(null, rep.map(function (r) { return Number(r.students); }).concat([1]));
+      document.getElementById('topi').innerHTML = rep.length
+        ? rep.map(function (r) { return bar(r.name, r.students, mx2); }).join('')
+        : '<div class="empty">No students registered yet.</div>';
+    }
+
+    // ─── STUDENTS & USERS ───
+    async function users() {
+      // No "+" here by design: counsellors are added from the Counsellors menu, institution
+      // logins from the Institutions menu, and students self-register or are added by their
+      // institution. This section is for viewing and managing what already exists.
+      main().innerHTML = D.header('Students & Users', 'All portal accounts — view, verify, disable or remove.')
+        + '<div id="st"></div>'
+        + '<div class="card"><div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">'
+        + '<select id="roleF" style="padding:9px 13px;border:1.5px solid var(--sage);border-radius:11px"><option value="">All roles</option><option value="student">Student</option><option value="counsellor">Counsellor</option><option value="institution">Institution</option><option value="alumni">Alumni</option><option value="admin">Admin</option></select>'
+        + '<input id="q" placeholder="Search name or email" style="flex:1;min-width:170px;padding:9px 13px;border:1.5px solid var(--sage);border-radius:11px"></div>'
+        + '<div class="tbl-wrap"><table class="tbl" id="uT"></table></div></div>';
+      document.getElementById('roleF').onchange = loadUsers;
+      var t; document.getElementById('q').oninput = function () { clearTimeout(t); t = setTimeout(loadUsers, 300); };
+      loadUsers();
+    }
+    async function loadUsers() {
+      var role = document.getElementById('roleF').value, q = document.getElementById('q').value.trim();
+      var rows = await api('/api/admin/users?' + (role ? 'role=' + role + '&' : '') + (q ? 'q=' + encodeURIComponent(q) : ''));
+      var all = await api('/api/admin/users');
+      var by = function (r) { return all.filter(function (u) { return u.role === r; }).length; };
+      document.getElementById('st').innerHTML = D.stats([
+        ['Total accounts', all.length, ''], ['Students', by('student'), 'c3'],
+        ['Unverified', all.filter(function (u) { return !u.is_verified; }).length, 'c2'],
+        ['Disabled', all.filter(function (u) { return !u.is_active; }).length, 'c4'],
+      ]);
+      var t = document.getElementById('uT');
+      if (!rows.length) { t.innerHTML = '<tbody><tr><td class="empty">No users found.</td></tr></tbody>'; return; }
+      t.innerHTML = '<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Institution</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
+        + rows.map(function (u) {
+          return '<tr><td>' + esc(u.full_name) + '</td><td>' + esc(u.email) + '</td><td>' + esc(u.role) + '</td><td>' + esc(u.institution_name || '—') + '</td><td>'
+            + (u.is_active ? '<span class="pill green">Active</span>' : '<span class="pill red">Disabled</span>')
+            + (u.is_verified ? '' : ' <span class="pill amber">Unverified</span>') + '</td><td class="row-actions">'
+            + (u.is_verified ? '' : '<button class="dash-btn sm" data-v="' + u.id + '">Verify</button>')
+            + '<button class="dash-btn sm ghost" style="color:var(--green);border-color:var(--sage)" data-t="' + u.id + '">' + (u.is_active ? 'Disable' : 'Enable') + '</button>'
+            + '<button class="dash-btn sm danger" data-d="' + u.id + '">Delete</button></td></tr>';
+        }).join('') + '</tbody>';
+      t.querySelectorAll('[data-v]').forEach(function (b) { b.onclick = go('/api/admin/users/' + b.dataset.v + '/verify', 'PUT', 'Verified.', loadUsers); });
+      t.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = go('/api/admin/users/' + b.dataset.t + '/toggle', 'PUT', 'Updated.', loadUsers); });
+      t.querySelectorAll('[data-d]').forEach(function (b) { b.onclick = function () { if (confirm('Delete this user permanently?')) go('/api/admin/users/' + b.dataset.d, 'DELETE', 'Deleted.', loadUsers)(); }; });
+    }
+    function go(path, method, msg, after) {
+      return async function () { try { await api(path, { method: method }); toast(msg); if (after) after(); } catch (ex) { toast(ex.message, true); } };
+    }
+
+    // ─── INSTITUTIONS ───
+    async function institutions() {
+      main().innerHTML = D.header('Institutions', '78 schools and 10 colleges of the district.', 'Add institution')
+        + '<div id="st"></div><div class="card"><div class="tbl-wrap"><table class="tbl" id="iT"></table></div></div>';
+      onAdd(function () {
+        D.modal('Add institution', ''
+          + '<div class="fld"><label>Name</label><input name="name" required></div>'
+          + '<div class="fld"><label>Type</label><select name="type"><option value="hss">Higher Secondary School</option><option value="college">College</option></select></div>'
+          + '<div class="fld"><label>Zone</label><input name="zone"></div>',
+          async function (f) {
+            await api('/api/institutions', { method: 'POST', body: { name: f.name.value, type: f.type.value, zone: f.zone.value } });
+            instCache = []; toast('Institution added.'); loadInst();
+          }, 'Add institution');
+      });
+      loadInst();
+    }
+    async function loadInst() {
+      var rows = await api('/api/institutions/admin/overview');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Institutions', rows.length, ''],
+        ['Schools', rows.filter(function (i) { return i.type === 'hss'; }).length, 'c3'],
+        ['Colleges', rows.filter(function (i) { return i.type === 'college'; }).length, 'c4'],
+        ['With login account', rows.filter(function (i) { return i.account_count > 0; }).length, 'c5'],
+      ]);
+      document.getElementById('iT').innerHTML = '<thead><tr><th>Name</th><th>Type</th><th>Students</th><th>Login</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
+        + rows.map(function (i) {
+          return '<tr><td>' + esc(i.name) + '</td><td>' + (i.type === 'hss' ? 'School' : 'College') + '</td><td>' + i.student_count + '</td><td>'
+            + (i.account_count > 0 ? '<span class="pill green">Yes</span>' : '<span class="pill grey">None</span>') + '</td><td>'
+            + (i.is_active ? '<span class="pill green">Active</span>' : '<span class="pill red">Off</span>') + '</td>'
+            + '<td class="row-actions"><button class="dash-btn sm" data-a="' + i.id + '" data-n="' + esc(i.name) + '">+ Account</button>'
+            + '<button class="dash-btn sm ghost" style="color:var(--green);border-color:var(--sage)" data-t="' + i.id + '">' + (i.is_active ? 'Disable' : 'Enable') + '</button></td></tr>';
+        }).join('') + '</tbody>';
+      document.querySelectorAll('#iT [data-t]').forEach(function (b) { b.onclick = go('/api/institutions/' + b.dataset.t + '/toggle', 'PUT', 'Updated.', loadInst); });
+      document.querySelectorAll('#iT [data-a]').forEach(function (b) {
+        b.onclick = function () {
+          var id = b.dataset.a, name = b.dataset.n;
+          D.modal('Login account for ' + name, ''
+            + '<div class="fld"><label>Email</label><input type="email" name="email" required></div>'
+            + '<div class="fld"><label>Temporary password (min 8)</label><input name="password" minlength="8" required></div>',
+            async function (f) {
+              await api('/api/institutions/' + id + '/account', { method: 'POST', body: { email: f.email.value, password: f.password.value, fullName: name } });
+              toast('Account created.'); loadInst();
+            }, 'Create account');
+        };
+      });
+    }
+
+    // ─── COUNSELLORS ───
+    async function counsellors() {
+      main().innerHTML = D.header('Counsellors', 'Counselling & Youth Development Centre staff.', 'Add counsellor')
+        + '<div id="st"></div><div id="cl"></div>';
+      onAdd(function () {
+        D.modal('Add counsellor', ''
+          + '<div class="fld"><label>Full name</label><input name="fullName" required></div>'
+          + '<div class="fld"><label>Email</label><input type="email" name="email" required></div>'
+          + '<div class="fld"><label>Specialisation / bio</label><textarea name="bio"></textarea></div>'
+          + '<div class="fld"><label>Temporary password (min 8)</label><input name="password" minlength="8" required></div>',
+          async function (f) {
+            await api('/api/admin/users', { method: 'POST', body: { fullName: f.fullName.value, email: f.email.value, bio: f.bio.value, password: f.password.value, role: 'counsellor' } });
+            toast('Counsellor added.'); loadCounsellors();
+          }, 'Add counsellor');
+      });
+      loadCounsellors();
+    }
+    async function loadCounsellors() {
+      var rows = await api('/api/admin/users?role=counsellor');
+      var cr = await api('/api/counselling');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Counsellors', rows.length, ''], ['Active', rows.filter(function (c) { return c.is_active; }).length, 'c3'],
+        ['Total requests', cr.length, 'c2'], ['Unassigned', cr.filter(function (r) { return !r.counsellor_id; }).length, 'c4'],
+      ]);
+      document.getElementById('cl').innerHTML = rows.map(function (c) {
+        var load = cr.filter(function (r) { return r.counsellor_id === c.id; }).length;
+        return '<div class="item"><div class="grow"><h4>' + esc(c.full_name) + '</h4><p>' + esc(c.bio || 'No bio added.') + '</p>'
+          + '<div class="meta">' + esc(c.email) + ' · ' + load + ' assigned request(s)</div></div><div>'
+          + (c.is_active ? '<span class="pill green">Active</span>' : '<span class="pill red">Disabled</span>')
+          + '<br><button class="dash-btn sm ghost" style="color:var(--green);border-color:var(--sage);margin-top:8px" data-t="' + c.id + '">' + (c.is_active ? 'Disable' : 'Enable') + '</button></div></div>';
+      }).join('') || '<div class="empty">No counsellors yet. Use "+ Add counsellor".</div>';
+      document.querySelectorAll('#cl [data-t]').forEach(function (b) { b.onclick = go('/api/admin/users/' + b.dataset.t + '/toggle', 'PUT', 'Updated.', loadCounsellors); });
+    }
+
+    // ─── ALUMNI ───
+    async function alumni() {
+      main().innerHTML = D.header('Alumni', 'Alumni profiles and mentorship (approve before they appear publicly).')
+        + '<div id="st"></div><div id="al"></div>';
+      var rows = await api('/api/alumni');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Alumni profiles', rows.length, ''], ['Approved', rows.filter(function (a) { return a.is_approved; }).length, 'c3'],
+        ['Pending', rows.filter(function (a) { return !a.is_approved; }).length, 'c2'],
+        ['Open to mentor', rows.filter(function (a) { return a.open_to_mentor; }).length, 'c5'],
+      ]);
+      document.getElementById('al').innerHTML = rows.map(function (a) {
+        return '<div class="item"><div class="grow"><h4>' + esc(a.full_name) + '</h4><p>' + esc(a.occupation || '') + (a.organisation ? ' · ' + esc(a.organisation) : '') + '</p>'
+          + '<div class="meta">' + esc(a.institution_name || '—') + (a.graduation_year ? ' · Class of ' + a.graduation_year : '') + (a.expertise ? ' · ' + esc(a.expertise) : '') + '</div></div><div>'
+          + (a.is_approved ? '<span class="pill green">Approved</span>' : '<button class="dash-btn sm" data-ap="' + a.id + '">Approve</button>') + '</div></div>';
+      }).join('') || '<div class="empty">No alumni profiles yet.</div>';
+      document.querySelectorAll('#al [data-ap]').forEach(function (b) { b.onclick = go('/api/alumni/' + b.dataset.ap + '/approve', 'PUT', 'Approved.', alumni); });
+    }
+
+    // ─── NOTICES ───
+    async function notices() {
+      main().innerHTML = D.header('Notices', 'District-wide and institution notices.', 'Post notice')
+        + '<div id="st"></div><div id="nl"></div>';
+      onAdd(async function () {
+        var opts = await institutionOptions();
+        D.modal('Post a notice', ''
+          + '<div class="fld"><label>Title</label><input name="title" required></div>'
+          + '<div class="fld"><label>Body</label><textarea name="body" required></textarea></div>'
+          + '<div class="fld"><label>Send to</label><select name="institutionId"><option value="">Everyone (district-wide)</option>' + opts + '</select></div>'
+          + '<div class="fld"><label><input type="checkbox" name="isPinned" style="width:auto;margin-right:7px">Pin to top</label></div>',
+          async function (f) {
+            await api('/api/notices', { method: 'POST', body: { title: f.title.value, body: f.body.value, institutionId: f.institutionId.value || null, isPinned: f.isPinned.checked } });
+            toast('Notice posted — students notified.'); loadNotices();
+          }, 'Post notice');
+      });
+      loadNotices();
+    }
+    async function loadNotices() {
+      var rows = await api('/api/notices');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Notices', rows.length, ''],
+        ['District-wide', rows.filter(function (n) { return !n.institution_id; }).length, 'c3'],
+        ['Institution-only', rows.filter(function (n) { return n.institution_id; }).length, 'c4'],
+        ['Pinned', rows.filter(function (n) { return n.is_pinned; }).length, 'c2'],
+      ]);
+      document.getElementById('nl').innerHTML = rows.map(function (n) {
+        return '<div class="item"><div class="grow"><h4>' + esc(n.title) + (n.is_pinned ? ' 📌' : '') + '</h4><p style="white-space:pre-line">' + esc(n.body) + '</p>'
+          + '<div class="meta">' + esc(n.institution_name || 'District-wide') + ' · ' + esc(n.author_name || '') + ' · ' + D.fmtDate(n.created_at) + '</div></div>'
+          + '<button class="dash-btn sm danger" data-d="' + n.id + '">Delete</button></div>';
+      }).join('') || '<div class="empty">No notices yet.</div>';
+      document.querySelectorAll('#nl [data-d]').forEach(function (b) { b.onclick = function () { if (confirm('Delete this notice?')) go('/api/notices/' + b.dataset.d, 'DELETE', 'Deleted.', loadNotices)(); }; });
+    }
+
+    // ─── EVENTS ───
+    async function events() {
+      main().innerHTML = D.header('Events', 'District events, competitions and workshops.', 'Create event')
+        + '<div id="st"></div><div id="el"></div>';
+      onAdd(async function () {
+        var opts = await institutionOptions();
+        D.modal('Create event', ''
+          + '<div class="fld"><label>Title</label><input name="title" required></div>'
+          + '<div class="fld"><label>Category</label><select name="category"><option value="event">Event</option><option value="competition">Competition</option><option value="workshop">Workshop</option><option value="awareness">Awareness programme</option></select></div>'
+          + D.dtFields('Starts at (date and time)', 'startsAt')
+          + '<div class="fld"><label>Venue</label><input name="venue"></div>'
+          + '<div class="fld"><label>Capacity (leave blank for unlimited)</label><input type="number" name="capacity" min="1"></div>'
+          + '<div class="fld"><label>For</label><select name="institutionId"><option value="">All institutions (district-level)</option>' + opts + '</select></div>'
+          + '<div class="fld"><label>Description</label><textarea name="description"></textarea></div>',
+          async function (f) {
+            await api('/api/events', { method: 'POST', body: { title: f.title.value, category: f.category.value, startsAt: D.dtValue(f, 'startsAt'), venue: f.venue.value, capacity: f.capacity.value || null, institutionId: f.institutionId.value || null, description: f.description.value } });
+            toast('Event created.'); loadEvents();
+          }, 'Create event');
+      });
+      loadEvents();
+    }
+    async function loadEvents() {
+      var rows = await api('/api/events');
+      var now = new Date();
+      document.getElementById('st').innerHTML = D.stats([
+        ['Events', rows.length, ''],
+        ['Upcoming', rows.filter(function (e) { return new Date(e.starts_at) > now; }).length, 'c3'],
+        ['Total sign-ups', rows.reduce(function (a, e) { return a + Number(e.registered_count); }, 0), 'c4'],
+        ['District-level', rows.filter(function (e) { return !e.institution_id; }).length, 'c5'],
+      ]);
+      document.getElementById('el').innerHTML = rows.map(function (e) {
+        return '<div class="item"><div class="grow"><h4>' + esc(e.title) + ' <span class="pill grey">' + esc(e.category) + '</span></h4><p>' + esc(e.description || '') + '</p>'
+          + '<div class="meta">' + D.fmtDateTime(e.starts_at) + ' · ' + esc(e.venue || 'TBA') + ' · ' + esc(e.institution_name || 'District-level')
+          + ' · ' + e.registered_count + (e.capacity ? '/' + e.capacity : '') + ' registered</div></div>'
+          + '<button class="dash-btn sm danger" data-d="' + e.id + '">Delete</button></div>';
+      }).join('') || '<div class="empty">No events yet.</div>';
+      document.querySelectorAll('#el [data-d]').forEach(function (b) { b.onclick = function () { if (confirm('Delete this event?')) go('/api/events/' + b.dataset.d, 'DELETE', 'Deleted.', loadEvents)(); }; });
+    }
+
+    // ─── COUNSELLING ───
+    async function counselling() {
+      main().innerHTML = D.header('Counselling Requests', 'All requests across the district. Assign counsellors and track status.')
+        + '<div id="st"></div>'
+        + '<div style="margin-bottom:14px"><select id="sF" style="padding:9px 13px;border:1.5px solid var(--sage);border-radius:11px"><option value="">All statuses</option><option>pending</option><option>assigned</option><option>scheduled</option><option>completed</option><option>cancelled</option></select></div>'
+        + '<div id="cl"><div class="empty">Loading…</div></div>';
+      document.getElementById('sF').onchange = function () { loadCounselling(this.value); };
+      loadCounselling('');
+    }
+    async function loadCounselling(status) {
+      var rows = await api('/api/counselling' + (status ? '?status=' + status : ''));
+      var all = status ? await api('/api/counselling') : rows;
+      document.getElementById('st').innerHTML = D.stats([
+        ['Total', all.length, ''], ['Pending', all.filter(function (r) { return r.status === 'pending'; }).length, 'c2'],
+        ['Scheduled', all.filter(function (r) { return r.status === 'scheduled'; }).length, 'c3'],
+        ['Completed', all.filter(function (r) { return r.status === 'completed'; }).length, 'c4'],
+      ]);
+      var cs = (await api('/api/admin/users?role=counsellor')).filter(function (c) { return c.is_active; });
+      var pill = { pending: 'amber', assigned: 'green', scheduled: 'green', completed: 'grey', cancelled: 'red' };
+      document.getElementById('cl').innerHTML = rows.map(function (r) {
+        var who = r.student_name || r.guest_name || 'Anonymous';
+        return '<div class="item"><div class="grow"><h4>' + esc(who) + ' — ' + esc(r.request_type) + '</h4>'
+          + '<p style="white-space:pre-line">' + esc(r.description || 'No details provided.') + '</p>'
+          + '<div class="meta">' + esc(r.institution_name || 'Guest') + ' · ' + D.fmtDateTime(r.created_at)
+          + (r.preferred_language ? ' · ' + esc(r.preferred_language) : '') + '</div></div>'
+          + '<div style="text-align:right"><span class="pill ' + (pill[r.status] || 'grey') + '">' + esc(r.status) + '</span><br>'
+          + '<select data-as="' + r.id + '" style="margin-top:8px;font-size:.72rem;padding:5px;border:1.5px solid var(--sage);border-radius:8px"><option value="">Assign…</option>'
+          + cs.map(function (c) { return '<option value="' + c.id + '"' + (c.id === r.counsellor_id ? ' selected' : '') + '>' + esc(c.full_name) + '</option>'; }).join('')
+          + '</select><br><select data-st="' + r.id + '" style="margin-top:6px;font-size:.72rem;padding:5px;border:1.5px solid var(--sage);border-radius:8px">'
+          + ['pending', 'assigned', 'scheduled', 'completed', 'cancelled'].map(function (s) { return '<option' + (s === r.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
+          + '</select></div></div>';
+      }).join('') || '<div class="empty">No requests.</div>';
+      document.querySelectorAll('[data-as]').forEach(function (s) { s.onchange = function () { upd(s.dataset.as, { counsellorId: s.value }); }; });
+      document.querySelectorAll('[data-st]').forEach(function (s) { s.onchange = function () { upd(s.dataset.st, { status: s.value }); }; });
+    }
+    async function upd(id, body) { try { await api('/api/counselling/' + id, { method: 'PUT', body: body }); toast('Updated.'); } catch (ex) { toast(ex.message, true); } }
+
+    // ─── DISCUSSIONS ───
+    async function discussions() {
+      main().innerHTML = D.header('Discussions', 'Student discussion board — moderate as needed.')
+        + '<div id="st"></div><div id="dl"></div>';
+      var rows = await api('/api/discussions');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Discussions', rows.length, ''],
+        ['Total replies', rows.reduce(function (a, d) { return a + Number(d.reply_count); }, 0), 'c3'],
+        ['Locked', rows.filter(function (d) { return d.is_locked; }).length, 'c2'],
+        ['Unanswered', rows.filter(function (d) { return Number(d.reply_count) === 0; }).length, 'c4'],
+      ]);
+      document.getElementById('dl').innerHTML = rows.map(function (d) {
+        return '<div class="item"><div class="grow"><h4>' + esc(d.title) + (d.is_locked ? ' 🔒' : '') + '</h4><p>' + esc(d.body) + '</p>'
+          + '<div class="meta">' + esc(d.author_name) + ' (' + esc(d.author_role) + ') · ' + d.reply_count + ' replies · ' + D.fmtDate(d.created_at) + '</div></div>'
+          + '<div class="row-actions"><button class="dash-btn sm ghost" style="color:var(--green);border-color:var(--sage)" data-l="' + d.id + '">' + (d.is_locked ? 'Unlock' : 'Lock') + '</button>'
+          + '<button class="dash-btn sm danger" data-d="' + d.id + '">Delete</button></div></div>';
+      }).join('') || '<div class="empty">No discussions yet.</div>';
+      document.querySelectorAll('#dl [data-l]').forEach(function (b) { b.onclick = go('/api/discussions/' + b.dataset.l + '/lock', 'PUT', 'Updated.', discussions); });
+      document.querySelectorAll('#dl [data-d]').forEach(function (b) { b.onclick = function () { if (confirm('Delete this discussion?')) go('/api/discussions/' + b.dataset.d, 'DELETE', 'Deleted.', discussions)(); }; });
+    }
+
+    // ─── CAREER GUIDANCE ───
+    async function career() {
+      main().innerHTML = D.header('Career Guidance', 'Resources and guidance sessions for students.', 'Add resource')
+        + '<div id="st"></div><div class="card"><h3>Guidance sessions</h3><button class="dash-btn sm" id="addSess" style="margin-bottom:12px">+ Add session</button><div id="sl"></div></div>'
+        + '<div class="card"><h3>Resources</h3><div id="rl"></div></div>';
+      onAdd(function () {
+        D.modal('Add career resource', ''
+          + '<div class="fld"><label>Title</label><input name="title" required></div>'
+          + '<div class="fld"><label>Category</label><input name="category" placeholder="e.g. Engineering, Medical, Skills"></div>'
+          + '<div class="fld"><label>Link</label><input name="linkUrl" placeholder="https://…"></div>'
+          + '<div class="fld"><label>Description</label><textarea name="description"></textarea></div>',
+          async function (f) {
+            await api('/api/career/resources', { method: 'POST', body: { title: f.title.value, category: f.category.value, linkUrl: f.linkUrl.value, description: f.description.value } });
+            toast('Resource added.'); loadCareer();
+          }, 'Add resource');
+      });
+      document.getElementById('addSess').onclick = function () {
+        D.modal('Add guidance session', ''
+          + '<div class="fld"><label>Title</label><input name="title" required></div>'
+          + '<div class="fld"><label>Speaker</label><input name="speaker"></div>'
+          + D.dtFields('Starts at (date and time)', 'startsAt')
+          + '<div class="fld"><label>Venue</label><input name="venue"></div>'
+          + '<div class="fld"><label>Description</label><textarea name="description"></textarea></div>',
+          async function (f) {
+            await api('/api/career/sessions', { method: 'POST', body: { title: f.title.value, speaker: f.speaker.value, startsAt: D.dtValue(f, 'startsAt'), venue: f.venue.value, description: f.description.value } });
+            toast('Session added.'); loadCareer();
+          }, 'Add session');
+      };
+      loadCareer();
+    }
+    async function loadCareer() {
+      var r = await api('/api/career/resources'), s = await api('/api/career/sessions');
+      var now = new Date();
+      document.getElementById('st').innerHTML = D.stats([
+        ['Resources', r.length, ''], ['Sessions', s.length, 'c3'],
+        ['Upcoming sessions', s.filter(function (x) { return new Date(x.starts_at) > now; }).length, 'c4'],
+      ]);
+      document.getElementById('sl').innerHTML = s.map(function (x) {
+        return '<div class="item"><div class="grow"><h4>' + esc(x.title) + '</h4><p>' + esc(x.description || '') + '</p><div class="meta">' + (x.speaker ? esc(x.speaker) + ' · ' : '') + D.fmtDateTime(x.starts_at) + (x.venue ? ' · ' + esc(x.venue) : '') + '</div></div><button class="dash-btn sm danger" data-ds="' + x.id + '">Delete</button></div>';
+      }).join('') || '<div class="empty">No sessions scheduled.</div>';
+      document.getElementById('rl').innerHTML = r.map(function (x) {
+        return '<div class="item"><div class="grow"><h4>' + esc(x.title) + ' <span class="pill grey">' + esc(x.category) + '</span></h4><p>' + esc(x.description || '') + '</p>'
+          + (x.link_url ? '<div class="meta"><a href="' + esc(x.link_url) + '" target="_blank" rel="noopener">Open link →</a></div>' : '') + '</div><button class="dash-btn sm danger" data-dr="' + x.id + '">Delete</button></div>';
+      }).join('') || '<div class="empty">No resources yet.</div>';
+      document.querySelectorAll('[data-ds]').forEach(function (b) { b.onclick = go('/api/career/sessions/' + b.dataset.ds, 'DELETE', 'Deleted.', loadCareer); });
+      document.querySelectorAll('[data-dr]').forEach(function (b) { b.onclick = go('/api/career/resources/' + b.dataset.dr, 'DELETE', 'Deleted.', loadCareer); });
+    }
+
+    // ─── TALENT SHOWCASE ───
+    async function talent() {
+      main().innerHTML = D.header('Talent Showcase', 'Student submissions — approve to publish them publicly.')
+        + '<div id="st"></div><div id="tl"><div class="empty">Loading…</div></div>';
+      var rows = await api('/api/talents');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Submissions', rows.length, ''],
+        ['Approved (live)', rows.filter(function (t) { return t.is_approved; }).length, 'c3'],
+        ['Awaiting approval', rows.filter(function (t) { return !t.is_approved; }).length, 'c2'],
+        ['Total likes', rows.reduce(function (a, t) { return a + Number(t.like_count); }, 0), 'c5'],
+      ]);
+      document.getElementById('tl').innerHTML = rows.map(function (t) {
+        return '<div class="item"><div class="grow"><h4>' + esc(t.title) + ' <span class="pill grey">' + esc(t.category) + '</span></h4><p>' + esc(t.description || '') + '</p>'
+          + '<div class="meta">' + esc(t.student_name) + ' · ' + esc(t.institution_name || '—') + ' · ❤ ' + t.like_count + '</div></div>'
+          + '<div class="row-actions">' + (t.is_approved ? '<span class="pill green">Live</span>' : '<button class="dash-btn sm" data-ap="' + t.id + '">Approve</button>')
+          + '<button class="dash-btn sm danger" data-d="' + t.id + '">Delete</button></div></div>';
+      }).join('') || '<div class="empty">No talent submissions yet.</div>';
+      document.querySelectorAll('#tl [data-ap]').forEach(function (b) { b.onclick = go('/api/talents/' + b.dataset.ap + '/approve', 'PUT', 'Approved — now public.', talent); });
+      document.querySelectorAll('#tl [data-d]').forEach(function (b) { b.onclick = function () { if (confirm('Delete this entry?')) go('/api/talents/' + b.dataset.d, 'DELETE', 'Deleted.', talent)(); }; });
+    }
+
+    // ─── GALLERY & VIDEO (PDF §5.4) — moderate the media queue and manage published items ───
+    var MEDIA = (window.PORTAL_API_BASE || '').replace(/\/$/, '');
+    function mediaTile(x, staff) {
+      var src = MEDIA + x.file_path;
+      var thumb = x.media_type === 'video'
+        ? '<video src="' + esc(src) + '" muted style="width:100%;height:150px;object-fit:cover;background:#000"></video>'
+        : '<img src="' + esc(src) + '" alt="' + esc(x.title) + '" loading="lazy" style="width:100%;height:150px;object-fit:cover">';
+      return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:0">'
+        + '<a href="' + esc(src) + '" target="_blank" rel="noopener">' + thumb + '</a>'
+        + '<div style="padding:12px 14px"><h4 style="margin:0 0 4px;color:var(--green);font-size:.92rem">' + esc(x.title)
+        + (x.is_approved ? '' : ' <span class="pill amber">Pending</span>') + '</h4>'
+        + (x.caption ? '<p style="margin:0;font-size:.8rem;opacity:.75">' + esc(x.caption) + '</p>' : '')
+        + '<div class="meta" style="font-size:.7rem;opacity:.6;margin-top:6px">' + esc(x.uploader_name || '—')
+        + (x.institution_name ? ' · ' + esc(x.institution_name) : '') + ' · ' + D.fmtDate(x.created_at) + '</div>'
+        + '<div class="row-actions" style="margin-top:10px">'
+        + (staff && !x.is_approved ? '<button class="dash-btn sm" data-ap="' + x.id + '">Approve</button>' : '')
+        + '<button class="dash-btn sm danger" data-d="' + x.id + '">Delete</button></div></div></div>';
+    }
+    async function gallery() {
+      main().innerHTML = D.header('Gallery & Video', 'Photos and videos from schools, colleges and students. Approve student uploads to publish them.')
+        + '<div id="st"></div>'
+        + '<div class="card"><h3>Awaiting approval</h3><div id="gq" class="media-grid"><div class="empty">Loading…</div></div></div>'
+        + '<div class="card"><h3>Published</h3><div id="gp" class="media-grid"><div class="empty">Loading…</div></div></div>';
+      loadGallery();
+    }
+    async function loadGallery() {
+      var pending = await api('/api/gallery?pending=1'), live = await api('/api/gallery');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Total media', pending.length + live.length, ''],
+        ['Published', live.length, 'c3'],
+        ['Awaiting approval', pending.length, 'c2'],
+        ['Videos', live.concat(pending).filter(function (x) { return x.media_type === 'video'; }).length, 'c5'],
+      ]);
+      document.getElementById('gq').innerHTML = pending.length ? pending.map(function (x) { return mediaTile(x, true); }).join('') : '<div class="empty">Nothing waiting — all uploads are reviewed.</div>';
+      document.getElementById('gp').innerHTML = live.length ? live.map(function (x) { return mediaTile(x, true); }).join('') : '<div class="empty">No published media yet.</div>';
+      document.querySelectorAll('.media-grid [data-ap]').forEach(function (b) { b.onclick = go('/api/gallery/' + b.dataset.ap + '/approve', 'PUT', 'Approved — now public.', loadGallery); });
+      document.querySelectorAll('.media-grid [data-d]').forEach(function (b) { b.onclick = function () { if (confirm('Delete this media item?')) go('/api/gallery/' + b.dataset.d, 'DELETE', 'Deleted.', loadGallery)(); }; });
+    }
+
+    // ─── NOTIFICATIONS — admin sends important announcements and manages what was sent ───
+    var AUDIENCE_LABEL = { all: 'Everyone', students: 'All students', alumni: 'All alumni', institutions: 'All institutions', counsellors: 'All counsellors' };
+
+    function announcementForm(existing) {
+      return institutionOptions().then(function (opts) {
+        var title = existing ? existing.title : '';
+        var message = existing ? existing.message : '';
+        var audienceField = existing
+          ? '' // audience/recipients are fixed once sent; edit only changes the wording
+          : '<div class="fld"><label>Send to</label><select name="audience"><option value="all">Everyone (students, alumni, institutions, counsellors)</option><option value="students">All students</option><option value="alumni">All alumni</option><option value="institutions">All institutions</option><option value="counsellors">All counsellors</option></select></div>'
+            + '<div class="fld"><label>Limit to one institution (optional)</label><select name="institutionId"><option value="">No limit</option>' + opts + '</select></div>';
+        return '<div class="fld"><label>Title</label><input name="title" value="' + esc(title) + '" required></div>'
+          + '<div class="fld"><label>Message</label><textarea name="message" required>' + esc(message) + '</textarea></div>'
+          + audienceField;
+      });
+    }
+
+    async function notifications() {
+      main().innerHTML = D.header('Notifications', 'Send important announcements — only the District Administration can send. Edit or delete anything you have sent.', 'Send announcement')
+        + '<div id="st"></div>'
+        + '<div class="card"><h3>Announcements you have sent</h3><div id="sentl"><div class="empty">Loading…</div></div></div>';
+
+      onAdd(async function () {
+        D.modal('Send an important notification', await announcementForm(null), async function (f) {
+          var r = await api('/api/notifications/broadcast', { method: 'POST', body: {
+            title: f.title.value, message: f.message.value,
+            audience: f.audience.value, institutionId: f.institutionId.value || null,
+          } });
+          toast('Sent to ' + r.sent + ' people.'); notifications();
+        }, 'Send now');
+      });
+
+      loadSent();
+    }
+
+    async function loadSent() {
+      var rows = await api('/api/notifications/announcements');
+      document.getElementById('st').innerHTML = D.stats([
+        ['Announcements sent', rows.length, ''],
+        ['Total deliveries', rows.reduce(function (a, r) { return a + Number(r.recipient_count); }, 0), 'c3'],
+        ['Total reads', rows.reduce(function (a, r) { return a + Number(r.read_count); }, 0), 'c4'],
+      ]);
+      document.getElementById('sentl').innerHTML = rows.length ? rows.map(function (r) {
+        return '<div class="item"><div class="grow"><h4>' + esc(r.title) + '</h4>'
+          + '<p style="white-space:pre-line">' + esc(r.message) + '</p>'
+          + '<div class="meta">To ' + esc(AUDIENCE_LABEL[r.audience] || r.audience)
+          + (r.institution_name ? ' (' + esc(r.institution_name) + ')' : '')
+          + ' · ' + r.recipient_count + ' recipients · ' + r.read_count + ' read · ' + D.fmtDateTime(r.created_at)
+          + ' · by ' + esc(r.sent_by_name || 'admin') + '</div></div>'
+          + '<div class="row-actions"><button class="dash-btn sm ghost" style="color:var(--green);border-color:var(--sage)" data-edit="' + r.id + '">Edit</button>'
+          + '<button class="dash-btn sm danger" data-del="' + r.id + '">Delete</button></div></div>';
+      }).join('') : '<div class="empty">You have not sent any announcements yet. Use “+ Send announcement”.</div>';
+
+      document.querySelectorAll('#sentl [data-edit]').forEach(function (b) {
+        b.onclick = async function () {
+          var row = rows.filter(function (x) { return String(x.id) === b.dataset.edit; })[0];
+          D.modal('Edit announcement', await announcementForm(row), async function (f) {
+            await api('/api/notifications/announcements/' + row.id, { method: 'PUT', body: { title: f.title.value, message: f.message.value } });
+            toast('Updated — recipients now see the correction.'); loadSent();
+          }, 'Save changes');
+        };
+      });
+      document.querySelectorAll('#sentl [data-del]').forEach(function (b) {
+        b.onclick = function () {
+          if (!confirm('Delete this announcement? It will be removed from everyone who received it.')) return;
+          api('/api/notifications/announcements/' + b.dataset.del, { method: 'DELETE' })
+            .then(function () { toast('Deleted.'); loadSent(); })
+            .catch(function (ex) { toast(ex.message, true); });
+        };
+      });
+    }
+
+    // ─── REPORTS ───
+    async function reports() {
+      main().innerHTML = D.header('Reports', 'Institution-wise participation across the district.')
+        + '<div class="card"><div class="tbl-wrap"><table class="tbl" id="rT"></table></div></div>';
+      var rows = await api('/api/admin/reports/institutions');
+      document.getElementById('rT').innerHTML = '<thead><tr><th>Institution</th><th>Type</th><th>Students</th><th>Event sign-ups</th><th>Counselling</th></tr></thead><tbody>'
+        + rows.map(function (r) { return '<tr><td>' + esc(r.name) + '</td><td>' + (r.type === 'hss' ? 'School' : 'College') + '</td><td>' + r.students + '</td><td>' + r.event_registrations + '</td><td>' + r.counselling_requests + '</td></tr>'; }).join('') + '</tbody>';
+    }
+
+    // ─── ACTIVITY ───
+    async function activity() {
+      main().innerHTML = D.header('Activity Log', 'Recent actions across the portal.')
+        + '<div class="card"><div class="tbl-wrap"><table class="tbl" id="aT"></table></div></div>';
+      var rows = await api('/api/admin/activity');
+      document.getElementById('aT').innerHTML = '<thead><tr><th>When</th><th>User</th><th>Action</th><th>Entity</th><th>Detail</th></tr></thead><tbody>'
+        + rows.map(function (a) { return '<tr><td>' + D.fmtDateTime(a.created_at) + '</td><td>' + esc(a.user_name || 'System') + '</td><td>' + esc(a.action) + '</td><td>' + esc(a.entity || '—') + '</td><td>' + esc(a.detail || '') + '</td></tr>'; }).join('') + '</tbody>';
+    }
+
+    // ─── SETTINGS ───
+    async function settings() {
+      main().innerHTML = D.header('Settings', 'Portal configuration.')
+        + '<div class="card"><form id="sF" class="f"><div style="margin-bottom:13px"><label>Portal name</label><input name="portal_name"></div><button class="dash-btn" type="submit">Save</button></form></div>';
+      var s = await api('/api/admin/settings');
+      var f = document.getElementById('sF');
+      if (s.portal_name) f.portal_name.value = s.portal_name;
+      f.onsubmit = async function (e) { e.preventDefault(); try { await api('/api/admin/settings', { method: 'PUT', body: { portal_name: f.portal_name.value } }); toast('Saved.'); } catch (ex) { toast(ex.message, true); } };
+    }
+  })();
+  </script>
+</body>
+</html>

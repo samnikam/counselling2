@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard — Anantnag Youth Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+  <script src="assets/js/portal-auth.js"></script>
+  <script src="assets/js/dashboard-core.js"></script>
+  <script>
+  (function () {
+    var D = window.DASH, api = D.api, esc = D.esc, toast = D.toast;
+    var main = function () { return document.getElementById('dash-main'); };
+
+    D.boot({
+      role: 'student',
+      title: 'Student',
+      sections: [
+        { id: 'home', label: 'Dashboard', icon: 'grid', group: 'Overview' },
+        { id: 'notices', label: 'Notices', icon: 'bell', group: 'Explore' },
+        { id: 'events', label: 'Events', icon: 'calendar', group: 'Explore' },
+        { id: 'gallery', label: 'Gallery & Video', icon: 'image', group: 'Explore' },
+        { id: 'career', label: 'Career', icon: 'compass', group: 'Explore' },
+        { id: 'counselling', label: 'Counselling', icon: 'heart', group: 'Support' },
+        { id: 'discussions', label: 'Discussions', icon: 'message', group: 'Support' },
+        { id: 'talent', label: 'My Talent', icon: 'star', group: 'Support' },
+        { id: 'notifications', label: 'Alerts', icon: 'megaphone', badge: true, group: 'My account' },
+        { id: 'profile', label: 'Profile', icon: 'user', group: 'My account' },
+      ],
+      onSection: render,
+    }).then(refreshBadge);
+
+    function render(id) { ({ home: home, notices: notices, events: events, gallery: gallery, counselling: counselling, discussions: discussions, talent: talent, career: career, notifications: notifications, profile: profile }[id] || home)(); }
+
+    function refreshBadge() { return D.refreshAlertBadge('notifications'); }
+
+    async function home() {
+      var u = D.user;
+      main().innerHTML = '<h1 class="dash-h">Welcome, ' + esc(u.fullName.split(' ')[0]) + '</h1><p class="dash-sub">' + esc(u.institutionName || 'Anantnag') + (u.classYear ? ' · ' + esc(u.classYear) : '') + '</p>'
+        + '<div class="stat-grid" id="st"></div>'
+        + '<div class="card"><h3>Latest notices</h3><div id="hn"></div></div>'
+        + '<div class="card"><h3>Upcoming events</h3><div id="he"></div></div>';
+      var notices = await api('/api/notices'); var evs = await api('/api/events'); var regs = await api('/api/events/my-registrations');
+      document.getElementById('st').innerHTML = [['Notices', notices.length, ''], ['Events', evs.length, 'c3'], ['My registrations', regs.length, 'c4']]
+        .map(function (x) { return '<div class="stat ' + x[2] + '"><div class="n">' + x[1] + '</div><div class="l">' + x[0] + '</div></div>'; }).join('');
+      document.getElementById('hn').innerHTML = notices.slice(0, 3).map(noticeItem).join('') || '<div class="empty">No notices yet.</div>';
+      document.getElementById('he').innerHTML = evs.slice(0, 3).map(function (e) { return '<div class="item"><div class="grow"><h4>' + esc(e.title) + '</h4><div class="meta">' + D.fmtDateTime(e.starts_at) + ' · ' + esc(e.venue || 'TBA') + '</div></div></div>'; }).join('') || '<div class="empty">No events scheduled.</div>';
+    }
+    function noticeItem(n) { return '<div class="item"><div class="grow"><h4>' + esc(n.title) + (n.is_pinned ? ' 📌' : '') + '</h4><p>' + esc(n.body) + '</p><div class="meta">' + esc(n.author_name || 'District') + ' · ' + D.fmtDate(n.created_at) + '</div></div></div>'; }
+
+    async function notices() {
+      main().innerHTML = '<h1 class="dash-h">Notices & Announcements</h1><p class="dash-sub">From the district and your institution.</p><div id="nl"><div class="empty">Loading…</div></div>';
+      var rows = await api('/api/notices');
+      document.getElementById('nl').innerHTML = rows.map(noticeItem).join('') || '<div class="empty">No notices yet.</div>';
+    }
+
+    async function events() {
+      main().innerHTML = '<h1 class="dash-h">Events & Competitions</h1><p class="dash-sub">Register for district and institution events.</p><div id="el"><div class="empty">Loading…</div></div>';
+      var evs = await api('/api/events'); var regs = await api('/api/events/my-registrations');
+      var mine = {}; regs.forEach(function (r) { mine[r.id] = true; });
+      document.getElementById('el').innerHTML = evs.map(function (e) {
+        var full = e.capacity && e.registered_count >= e.capacity;
+        return '<div class="item"><div class="grow"><h4>' + esc(e.title) + ' <span class="pill grey">' + esc(e.category) + '</span></h4><p>' + esc(e.description || '') + '</p>'
+          + '<div class="meta">' + D.fmtDateTime(e.starts_at) + ' · ' + esc(e.venue || 'TBA') + ' · ' + e.registered_count + (e.capacity ? '/' + e.capacity : '') + ' registered</div></div>'
+          + '<div>' + (mine[e.id]
+            ? '<button class="dash-btn sm ghost" style="color:var(--green);border-color:var(--sage)" data-unreg="' + e.id + '">Registered ✓</button>'
+            : (full ? '<span class="pill red">Full</span>' : '<button class="dash-btn sm" data-reg="' + e.id + '">Register</button>')) + '</div></div>';
+      }).join('') || '<div class="empty">No events yet.</div>';
+      document.querySelectorAll('[data-reg]').forEach(function (b) { b.onclick = async function () { try { await api('/api/events/' + b.dataset.reg + '/register', { method: 'POST' }); toast('Registered!'); events(); } catch (ex) { toast(ex.message, true); } }; });
+      document.querySelectorAll('[data-unreg]').forEach(function (b) { b.onclick = async function () { try { await api('/api/events/' + b.dataset.unreg + '/register', { method: 'DELETE' }); toast('Cancelled.'); events(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    // Mirrors the public Book Appointment form field-for-field, and writes through the same
+    // shared description builder, so a request raised here is indistinguishable from one raised
+    // on the public site — identical fields, identical stored format, identical staff view.
+    async function counselling() {
+      var u = D.user;
+      var PC = window.PortalCounselling;
+
+      // Identity comes from the account and is read-only: a student's own request must
+      // always carry their own name, never a hand-typed one.
+      var ro = 'readonly style="background:rgba(33,64,47,.05);cursor:not-allowed"';
+
+      main().innerHTML = '<h1 class="dash-h">Counselling</h1>'
+        + '<p class="dash-sub">Request support — confidential to the Counselling Centre.</p>'
+        + '<div class="card"><h3>Request an appointment</h3><form id="cF">'
+        + '<div class="f f-row">'
+        + '<div><label>Full Name*</label><input name="fullName" value="' + esc(u.fullName) + '" ' + ro + '></div>'
+        + '<div><label>Class / Year*</label><input name="classYear" value="' + esc(u.classYear || '') + '" ' + ro + '></div>'
+        + '<div><label>School / College*</label><input name="institution" value="' + esc(u.institutionName || '') + '" ' + ro + '></div>'
+        + '<div><label>Contact Number*</label><input name="phone" value="' + esc(u.phone || '') + '" required placeholder="Your phone number"></div>'
+        + '</div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Preferred Counsellor (optional)</label>'
+        + '<select name="counsellor" id="cSel"><option value="">No preference</option></select></div>'
+        + '<div class="f f-row">'
+        + '<div><label>I\'d like guidance about*</label><select name="requestType" required>' + PC.topicOptions() + '</select></div>'
+        + '<div><label>Preferred language</label><select name="preferredLanguage"><option value="">Any</option><option>English</option><option>Hindi</option><option>Urdu</option></select></div>'
+        + '<div><label>Preferred Date (optional)</label><input type="date" name="preferredDate"></div>'
+        + '</div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Anything you\'d like to share (optional)</label>'
+        + '<textarea name="message" placeholder="Write freely — this stays confidential"></textarea></div>'
+        + '<button class="dash-btn" type="submit">Request appointment</button>'
+        + '<p class="dash-sub" style="margin-top:12px;margin-bottom:0">Your name and institution are taken from your account. '
+        + (u.phone ? '' : 'Add a phone number so the Centre can reach you.') + '</p>'
+        + '</form></div>'
+        + '<div class="card"><h3>My requests</h3><div id="crl"></div></div>';
+
+      // Real counsellors from the database — not a hardcoded list.
+      try {
+        var cs = await api('/api/counselling/counsellors');
+        var sel = document.getElementById('cSel');
+        cs.forEach(function (c) { sel.add(new Option(c.full_name, c.full_name)); });
+      } catch (e) { /* dropdown just stays at "No preference" */ }
+
+      document.getElementById('cF').addEventListener('submit', async function (e) {
+        e.preventDefault(); var f = e.target;
+        try {
+          await api('/api/counselling', {
+            method: 'POST',
+            body: {
+              requestType: f.requestType.value,
+              preferredLanguage: f.preferredLanguage.value,
+              preferredDate: f.preferredDate.value || null,
+              phone: f.phone.value,
+              description: PC.buildDescription({
+                message: f.message.value,
+                name: f.fullName.value,
+                phone: f.phone.value,
+                classYear: f.classYear.value,
+                institution: f.institution.value,
+                counsellor: f.counsellor.value,
+              }),
+            },
+          });
+          toast('Request submitted.'); counselling();
+        } catch (ex) { toast(ex.message, true); }
+      });
+      loadCr();
+    }
+    async function loadCr() {
+      var rows = await api('/api/counselling');
+      var pill = { pending: 'amber', assigned: 'green', scheduled: 'green', completed: 'grey', cancelled: 'red' };
+      document.getElementById('crl').innerHTML = rows.map(function (r) {
+        return '<div class="item"><div class="grow"><h4>' + esc(r.request_type) + '</h4><p style="white-space:pre-line">' + esc(r.description || '') + '</p><div class="meta">' + D.fmtDate(r.created_at) + (r.counsellor_name ? ' · ' + esc(r.counsellor_name) : '') + '</div></div>'
+          + '<div><span class="pill ' + (pill[r.status] || 'grey') + '">' + esc(r.status) + '</span>'
+          + ((r.status === 'pending' || r.status === 'assigned') ? '<br><button class="dash-btn sm danger" style="margin-top:8px" data-cancel="' + r.id + '">Cancel</button>' : '') + '</div></div>';
+      }).join('') || '<div class="empty">No requests yet.</div>';
+      document.querySelectorAll('[data-cancel]').forEach(function (b) { b.onclick = async function () { try { await api('/api/counselling/' + b.dataset.cancel + '/cancel', { method: 'PUT' }); toast('Cancelled.'); loadCr(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    async function discussions() {
+      main().innerHTML = '<h1 class="dash-h">Discussions</h1><p class="dash-sub">Ask questions and share ideas.</p>'
+        + '<div class="card"><h3>Start a discussion</h3><form id="dF"><div class="f" style="margin-bottom:10px"><label>Title</label><input name="title" required></div><div class="f" style="margin-bottom:13px"><label>Message</label><textarea name="body" required></textarea></div><button class="dash-btn" type="submit">Post</button></form></div>'
+        + '<div id="dl"></div>';
+      document.getElementById('dF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { await api('/api/discussions', { method: 'POST', body: { title: f.title.value, body: f.body.value } }); toast('Posted.'); f.reset(); loadDisc(); } catch (ex) { toast(ex.message, true); } });
+      loadDisc();
+    }
+    async function loadDisc() {
+      var rows = await api('/api/discussions');
+      document.getElementById('dl').innerHTML = rows.map(function (d) {
+        return '<div class="item"><div class="grow"><h4>' + esc(d.title) + '</h4><p>' + esc(d.body) + '</p><div class="meta">' + esc(d.author_name) + ' · ' + d.reply_count + ' replies · ' + D.fmtDate(d.created_at) + '</div>'
+          + '<div style="margin-top:8px"><input placeholder="Write a reply…" data-reply-input="' + d.id + '" style="width:70%;padding:7px 11px;border:1.5px solid var(--sage);border-radius:9px"> <button class="dash-btn sm" data-reply="' + d.id + '">Reply</button></div></div></div>';
+      }).join('') || '<div class="empty">No discussions yet.</div>';
+      document.querySelectorAll('[data-reply]').forEach(function (b) { b.onclick = async function () { var inp = document.querySelector('[data-reply-input="' + b.dataset.reply + '"]'); if (!inp.value.trim()) return; try { await api('/api/discussions/' + b.dataset.reply + '/replies', { method: 'POST', body: { body: inp.value } }); toast('Replied.'); loadDisc(); } catch (ex) { toast(ex.message, true); } }; });
+    }
+
+    async function talent() {
+      main().innerHTML = '<h1 class="dash-h">My Talent Showcase</h1><p class="dash-sub">Submit your skills, projects and achievements (approved before public).</p>'
+        + '<div class="card"><h3>New entry</h3><form id="tF"><div class="f f-row"><div><label>Title</label><input name="title" required></div><div><label>Category</label><input name="category" placeholder="Art, Coding, Sports…"></div></div><div class="f" style="margin-bottom:10px"><label>Description</label><textarea name="description"></textarea></div><div class="f" style="margin-bottom:13px"><label>Link (optional)</label><input name="linkUrl" placeholder="https://…"></div><button class="dash-btn" type="submit">Submit</button></form></div>'
+        + '<div id="tl"></div>';
+      document.getElementById('tF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { await api('/api/talents', { method: 'POST', body: { title: f.title.value, category: f.category.value, description: f.description.value, linkUrl: f.linkUrl.value } }); toast('Submitted for approval.'); f.reset(); loadTalent(); } catch (ex) { toast(ex.message, true); } });
+      loadTalent();
+    }
+    async function loadTalent() {
+      var rows = await api('/api/talents?mine=1');
+      document.getElementById('tl').innerHTML = rows.map(function (t) { return '<div class="item"><div class="grow"><h4>' + esc(t.title) + '</h4><p>' + esc(t.description || '') + '</p><div class="meta">❤ ' + t.like_count + ' · ' + esc(t.category) + '</div></div><div>' + (t.is_approved ? '<span class="pill green">Live</span>' : '<span class="pill amber">Pending</span>') + '</div></div>'; }).join('') || '<div class="empty">No entries yet.</div>';
+    }
+
+    async function career() {
+      main().innerHTML = '<h1 class="dash-h">Career Guidance</h1><p class="dash-sub">Resources and guidance sessions.</p><div class="card"><h3>Resources</h3><div id="cr"></div></div><div class="card"><h3>Guidance sessions</h3><div id="cs"></div></div>';
+      var r = await api('/api/career/resources'); var s = await api('/api/career/sessions');
+      document.getElementById('cr').innerHTML = r.map(function (x) { return '<div class="item"><div class="grow"><h4>' + esc(x.title) + '</h4><p>' + esc(x.description || '') + '</p>' + (x.link_url ? '<div class="meta"><a href="' + esc(x.link_url) + '" target="_blank" rel="noopener">Open resource →</a></div>' : '') + '</div></div>'; }).join('') || '<div class="empty">No resources yet.</div>';
+      document.getElementById('cs').innerHTML = s.map(function (x) { return '<div class="item"><div class="grow"><h4>' + esc(x.title) + '</h4><p>' + esc(x.description || '') + '</p><div class="meta">' + (x.speaker ? esc(x.speaker) + ' · ' : '') + D.fmtDateTime(x.starts_at) + '</div></div></div>'; }).join('') || '<div class="empty">No sessions scheduled.</div>';
+    }
+
+    // Gallery & Video (PDF §5.4) — students share activity photos/videos (published after approval).
+    var MEDIA = (window.PORTAL_API_BASE || '').replace(/\/$/, '');
+    async function gallery() {
+      main().innerHTML = '<h1 class="dash-h">Gallery &amp; Video</h1><p class="dash-sub">Share photos and videos of your activities. Uploads are published after a quick review.</p>'
+        + '<div class="card"><h3>Share something</h3><form id="gF">'
+        + '<div class="f f-row"><div><label>Title*</label><input name="title" required></div>'
+        + '<div><label>Caption (optional)</label><input name="caption"></div></div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Photo or video*</label><input type="file" name="file" accept="image/*,video/*" required></div>'
+        + '<button class="dash-btn" type="submit">Upload</button></form></div>'
+        + '<div class="card"><h3>Gallery</h3><div id="gl" class="media-grid"><div class="empty">Loading…</div></div></div>';
+      document.getElementById('gF').addEventListener('submit', async function (e) {
+        e.preventDefault(); var f = e.target;
+        if (!f.file.files.length) return;
+        var isVideo = (f.file.files[0].type || '').indexOf('video/') === 0;
+        var fd = new FormData();
+        fd.append('title', f.title.value); if (f.caption.value) fd.append('caption', f.caption.value);
+        fd.append('file', f.file.files[0]);
+        try { await api('/api/gallery/' + (isVideo ? 'videos' : 'gallery'), { method: 'POST', body: fd }); toast('Uploaded — awaiting approval.'); f.reset(); loadGallery(); }
+        catch (ex) { toast(ex.message, true); }
+      });
+      loadGallery();
+    }
+    async function loadGallery() {
+      var rows = await api('/api/gallery');
+      document.getElementById('gl').innerHTML = rows.length ? rows.map(function (x) {
+        var src = MEDIA + x.file_path;
+        var thumb = x.media_type === 'video'
+          ? '<video src="' + esc(src) + '" controls style="width:100%;height:160px;object-fit:cover;background:#000"></video>'
+          : '<a href="' + esc(src) + '" target="_blank" rel="noopener"><img src="' + esc(src) + '" alt="' + esc(x.title) + '" loading="lazy" style="width:100%;height:160px;object-fit:cover"></a>';
+        return '<div class="card" style="padding:0;overflow:hidden;margin-bottom:0">' + thumb
+          + '<div style="padding:11px 13px"><h4 style="margin:0;color:var(--green);font-size:.9rem">' + esc(x.title) + '</h4>'
+          + (x.caption ? '<p style="margin:4px 0 0;font-size:.78rem;opacity:.75">' + esc(x.caption) + '</p>' : '')
+          + '<div class="meta" style="font-size:.7rem;opacity:.6;margin-top:6px">' + esc(x.uploader_name || '—') + (x.institution_name ? ' · ' + esc(x.institution_name) : '') + '</div></div></div>';
+      }).join('') : '<div class="empty">No photos or videos yet. Be the first to share!</div>';
+    }
+
+    function notifications() { return D.alertsView('notifications'); }
+
+    async function profile() {
+      var u = D.user;
+      main().innerHTML = '<h1 class="dash-h">My Profile</h1><div class="card"><form id="pF"><div class="f f-row"><div><label>Full name</label><input name="fullName" value="' + esc(u.fullName) + '"></div><div><label>Phone</label><input name="phone" value="' + esc(u.phone || '') + '"></div><div><label>Class / Year</label><input name="classYear" value="' + esc(u.classYear || '') + '"></div></div><div class="f" style="margin-bottom:13px"><label>Bio</label><textarea name="bio">' + esc(u.bio || '') + '</textarea></div><button class="dash-btn" type="submit">Save</button></form></div>';
+      document.getElementById('pF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { var r = await api('/api/auth/profile', { method: 'PUT', body: { fullName: f.fullName.value, phone: f.phone.value, classYear: f.classYear.value, bio: f.bio.value } }); D.user = r.user; toast('Saved.'); } catch (ex) { toast(ex.message, true); } });
+    }
+  })();
+  </script>
+</body>
+</html>

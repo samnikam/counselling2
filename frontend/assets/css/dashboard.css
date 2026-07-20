@@ -1,0 +1,193 @@
+/* ============================================================
+   Dashboard shell — used only by the five role dashboards.
+   Reuses the site's design tokens from style.css (loaded first),
+   so the panels match the public site without altering it.
+   ============================================================ */
+
+.dash-body {
+  background: var(--cream-deep);
+  min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--ink);
+  margin: 0;
+}
+
+/* ---- top bar ---- */
+.dash-top {
+  background: var(--green);
+  color: var(--cream);
+  padding: 14px 26px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+}
+.dash-top .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; }
+.dash-top .brand .mark {
+  width: 38px; height: 38px; border-radius: 11px; background: var(--apricot);
+  color: var(--green); display: grid; place-items: center; font-weight: 800; font-size: 1.1rem;
+}
+.dash-top .brand small { display: block; font-weight: 500; font-size: .68rem; opacity: .75; }
+.dash-top .spacer { flex: 1; }
+.dash-top .who { font-size: .82rem; opacity: .9; text-align: right; }
+.dash-top .who b { display: block; }
+.dash-top .role-chip {
+  background: rgba(247,243,235,.16); padding: 3px 11px; border-radius: 999px;
+  font-size: .68rem; text-transform: capitalize;
+}
+.dash-btn {
+  background: var(--cream); color: var(--green); border: none; border-radius: 999px;
+  padding: 8px 18px; font-family: var(--font-body); font-weight: 600; font-size: .8rem;
+  cursor: pointer; transition: transform .25s var(--ease), background .25s var(--ease);
+}
+.dash-btn:hover { transform: translateY(-2px); }
+.dash-btn.ghost { background: transparent; color: var(--cream); border: 1.5px solid rgba(247,243,235,.4); }
+.dash-btn.sm { padding: 5px 13px; font-size: .72rem; }
+.dash-btn.danger { background: var(--terracotta); color: var(--cream); }
+
+/* ---- layout ---- */
+.dash-shell { display: flex; align-items: flex-start; gap: 22px; padding: 22px; max-width: 1280px; margin: 0 auto; }
+.dash-nav {
+  width: 232px; flex-shrink: 0; background: var(--white); border-radius: var(--radius-lg);
+  padding: 12px 10px; box-shadow: var(--shadow-sm); position: sticky; top: 84px;
+}
+/* Uppercase section heading that groups related menu items (e.g. "People", "Content"). */
+.dash-nav-group {
+  font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--green); opacity: .45; padding: 15px 14px 5px;
+}
+.dash-nav-group:first-child { padding-top: 4px; }
+.dash-nav button {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; border: none;
+  background: none; padding: 10px 13px; border-radius: 11px; font-family: var(--font-body);
+  font-size: .855rem; font-weight: 600; color: var(--green); cursor: pointer;
+  transition: background .2s var(--ease), color .2s var(--ease);
+}
+.dash-nav button .ic {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; opacity: .7;
+  transition: opacity .2s var(--ease);
+}
+.dash-nav button .lbl { flex: 1; min-width: 0; }
+.dash-nav button:hover { background: var(--cream-deep); }
+.dash-nav button:hover .ic { opacity: 1; }
+.dash-nav button.active { background: var(--green); color: var(--cream); box-shadow: var(--shadow-sm); }
+.dash-nav button.active .ic { opacity: 1; }
+.dash-nav .badge {
+  margin-left: auto; background: var(--terracotta); color: var(--cream);
+  font-size: .66rem; border-radius: 999px; padding: 1px 7px; min-width: 18px; text-align: center;
+}
+.dash-main { flex: 1; min-width: 0; }
+
+.dash-section { display: none; animation: dash-fade .3s var(--ease); }
+.dash-section.active { display: block; }
+@keyframes dash-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.dash-h { font-family: var(--font-display); font-size: 1.5rem; color: var(--green); margin: 0 0 4px; }
+.dash-sub { font-size: .85rem; opacity: .7; margin: 0 0 20px; }
+
+/* Section header: title on the left, "+ Add" action pinned right. */
+.dash-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dash-add {
+  background: var(--green); color: var(--cream); flex-shrink: 0;
+  padding: 10px 20px; font-size: .84rem;
+}
+.dash-add:hover { background: var(--green-soft); }
+
+/* Form inside a modal — reuses the .f field styles, spaced for a dialog. */
+.dash-modal-form .fld { margin-bottom: 13px; }
+.dash-modal-form label { display: block; font-size: .78rem; font-weight: 600; color: var(--green); margin-bottom: 5px; }
+.dash-modal-form input, .dash-modal-form select, .dash-modal-form textarea {
+  width: 100%; padding: 11px 13px; border: 1.5px solid var(--sage); border-radius: 11px;
+  font-family: var(--font-body); font-size: .88rem; color: var(--ink);
+  background: var(--white); box-sizing: border-box;
+}
+.dash-modal-form textarea { resize: vertical; min-height: 80px; }
+.dash-modal-form input:focus, .dash-modal-form select:focus, .dash-modal-form textarea:focus {
+  outline: none; border-color: var(--green);
+}
+
+/* Horizontal bar chart used at the top of sections. */
+.chart-row { margin-bottom: 11px; }
+.chart-row .cl { display: flex; justify-content: space-between; font-size: .78rem; margin-bottom: 4px; }
+.chart-row .cb { height: 9px; background: var(--cream-deep); border-radius: 9px; overflow: hidden; }
+.chart-row .cf { height: 100%; background: var(--green); border-radius: 9px; transition: width .6s var(--ease); }
+
+/* ---- cards / stats ---- */
+.card {
+  background: var(--white); border-radius: var(--radius-lg); padding: 20px 22px;
+  box-shadow: var(--shadow-sm); margin-bottom: 18px;
+}
+.card h3 { font-family: var(--font-display); color: var(--green); margin: 0 0 14px; font-size: 1.1rem; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat {
+  background: var(--white); border-radius: 18px; padding: 18px; box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--green);
+}
+.stat .n { font-family: var(--font-display); font-size: 2rem; color: var(--green); line-height: 1; }
+.stat .l { font-size: .78rem; opacity: .7; margin-top: 6px; }
+.stat.c2 { border-left-color: var(--terracotta); }
+.stat.c3 { border-left-color: var(--sky); }
+.stat.c4 { border-left-color: var(--gold); }
+.stat.c5 { border-left-color: var(--berry); }
+
+/* ---- tables ---- */
+.tbl-wrap { overflow-x: auto; border-radius: 14px; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+table.tbl th, table.tbl td { padding: 11px 13px; text-align: left; border-bottom: 1px solid var(--cream-deep); white-space: nowrap; }
+table.tbl th { color: var(--green); font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; }
+table.tbl tr:last-child td { border-bottom: none; }
+table.tbl tbody tr:hover { background: var(--cream); }
+
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .68rem; font-weight: 600; }
+.pill.green { background: #e2efe4; color: #2b5233; }
+.pill.amber { background: #fdf0d9; color: #8a5a12; }
+.pill.red { background: #fbe4dc; color: #8a3520; }
+.pill.grey { background: var(--cream-deep); color: var(--ink); }
+
+/* ---- forms ---- */
+.f-row { display: grid; gap: 13px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 13px; }
+.f label { display: block; font-size: .76rem; font-weight: 600; color: var(--green); margin-bottom: 5px; }
+.f input, .f select, .f textarea {
+  width: 100%; padding: 10px 13px; border: 1.5px solid var(--sage); border-radius: 11px;
+  font-family: var(--font-body); font-size: .86rem; color: var(--ink); background: var(--white); box-sizing: border-box;
+}
+.f textarea { resize: vertical; min-height: 82px; }
+.f input:focus, .f select:focus, .f textarea:focus { outline: none; border-color: var(--green); }
+
+/* ---- list items ---- */
+.item {
+  background: var(--white); border-radius: 16px; padding: 15px 18px; margin-bottom: 12px;
+  box-shadow: var(--shadow-sm); display: flex; gap: 14px; align-items: flex-start;
+}
+.item .grow { flex: 1; min-width: 0; }
+.item h4 { margin: 0 0 4px; color: var(--green); font-size: .98rem; }
+.item p { margin: 0; font-size: .84rem; opacity: .8; }
+.item .meta { font-size: .72rem; opacity: .6; margin-top: 6px; }
+
+.empty { text-align: center; padding: 40px 20px; opacity: .55; font-size: .9rem; }
+.toast {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: var(--green); color: var(--cream); padding: 12px 24px; border-radius: 999px;
+  font-size: .85rem; font-weight: 600; box-shadow: var(--shadow-lg); z-index: 3000;
+  transition: transform .4s var(--ease); max-width: 90vw;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.err { background: var(--terracotta); }
+
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Gallery & Video (PDF §5.4) — responsive grid of media thumbnails. */
+.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.media-grid .empty { grid-column: 1 / -1; }
+.media-grid img, .media-grid video { display: block; }
+
+@media (max-width: 860px) {
+  .dash-shell { flex-direction: column; }
+  .dash-nav { width: 100%; position: static; display: flex; overflow-x: auto; gap: 4px; }
+  .dash-nav button { white-space: nowrap; width: auto; }
+  /* Group headings only make sense in the vertical layout; hide them in the scroll strip. */
+  .dash-nav-group { display: none; }
+}

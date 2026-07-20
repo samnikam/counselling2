@@ -10,6 +10,52 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/enhance.css">
+  <style>
+    /* Rich image background behind the booking form — green overlay keeps the white
+       form card readable and on-brand. Scoped to this page only. */
+    .book-form-bg {
+      position: relative;
+      background:
+        linear-gradient(rgba(26, 46, 61, 0.90), rgba(38, 64, 82, 0.84)),
+        url('assets/images/muslim.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    /* A soft drifting glow for a little life. */
+    .book-form-bg::before {
+      content: ''; position: absolute; top: -60px; right: -50px;
+      width: 320px; height: 320px; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, rgba(231, 169, 126, 0.28) 0%, rgba(33, 64, 47, 0) 70%);
+      filter: blur(40px);
+    }
+    .book-form-bg .container { position: relative; z-index: 2; }
+
+    /* Intro text sits on the dark overlay now, so lighten it. */
+    .book-form-bg .section-head .eyebrow {
+      background: rgba(247, 243, 235, 0.12);
+      border-color: rgba(247, 243, 235, 0.35);
+      color: var(--cream);
+    }
+    .book-form-bg .section-head h2 { color: var(--cream); }
+    .book-form-bg .section-head p { color: rgba(247, 243, 235, 0.85); }
+
+    /* The form becomes a clean white card floating on the image. */
+    .book-form-bg #counsellingForm {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 36px 34px 30px;
+      box-shadow: var(--shadow-lg, 0 28px 60px rgba(33, 64, 47, 0.28));
+      margin-top: 6px;
+    }
+
+    @media (max-width: 600px) {
+      /* fixed backgrounds are janky on mobile — let it scroll normally */
+      .book-form-bg { background-attachment: scroll; }
+      .book-form-bg #counsellingForm { padding: 24px 20px; }
+    }
+  </style>
 </head>
 
 <body>
@@ -47,7 +93,7 @@
     </div>
   </section>
 
-  <section>
+  <section class="book-form-bg">
     <div class="container" style="max-width: 760px;">
       <div class="section-head center reveal">
         <span class="eyebrow">Book an Appointment</span>
@@ -55,7 +101,7 @@
         <p>Your request goes directly to the Counselling & Youth Development Center — no lengthy paperwork,
           nothing shared beyond the team handling your request.</p>
       </div>
-      <form data-demo class="reveal">
+      <form id="counsellingForm" class="reveal">
         <div class="form-grid">
           <div><label for="b-name">Full Name*</label><input id="b-name" type="text" required placeholder="Your name">
           </div>
@@ -79,10 +125,12 @@
             <label for="b-topic">I'd like guidance about*</label>
             <select id="b-topic" required>
               <option value="">Select a topic</option>
-              <option>Stress / Emotional well-being</option>
-              <option>Studies & Exams</option>
-              <option>Career confusion</option>
-              <option>Other</option>
+              <option value="stress">Stress / Emotional well-being</option>
+              <option value="academic">Studies & Exams</option>
+              <option value="career">Career confusion</option>
+              <option value="mental_health">Psychological well-being</option>
+              <option value="personal">Family / Personal</option>
+              <option value="other">Other</option>
             </select>
           </div>
           <div class="full"><label for="b-date">Preferred Date & Time (optional)</label><input id="b-date" type="text"
@@ -147,6 +195,101 @@
   </footer>
 
   <script src="assets/js/main.js"></script>
+  <script src="assets/js/portal-auth.js"></script>
+  <script src="assets/js/enhance.js"></script>
+  <script>
+  // Wire the public booking form to the real API (PDF §5.7). No account needed — a guest
+  // booking reaches the Counselling Centre with a name and phone so staff can follow up.
+  (function () {
+    var form = document.getElementById('counsellingForm');
+    if (!form) return;
+    var btn = form.querySelector('button[type="submit"]');
+
+    // If arriving from a counsellor card (…?counsellor=Name), pre-select that counsellor
+    // and scroll the form into view so the choice is obvious.
+    var picked = new URLSearchParams(location.search).get('counsellor');
+    if (picked) {
+      var sel = document.getElementById('b-counsellor');
+      if (sel) {
+        var found = Array.prototype.some.call(sel.options, function (o) { if (o.value === picked || o.text === picked) { o.selected = true; return true; } });
+        if (!found) { var opt = new Option(picked, picked, true, true); sel.add(opt); }
+      }
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // A signed-in student's request is always filed against their own account, so the identity
+    // fields are filled from that account and locked. Without this, typing someone else's name
+    // here produced a record labelled with the account holder but containing a different person's
+    // details — the request would reach the Centre attributed to the wrong student.
+    (async function prefillForSignedInUser() {
+      var me = null;
+      try { me = await window.PortalAPI('/api/auth/me'); } catch (e) { return; } // guest: leave blank
+      if (!me || !me.user) return;
+      var u = me.user;
+
+      function lock(id, value) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (value) el.value = value;
+        el.readOnly = true;
+        el.style.background = 'rgba(33,64,47,.05)';
+        el.style.cursor = 'not-allowed';
+      }
+      lock('b-name', u.fullName);
+      lock('b-class', u.classYear);
+      lock('b-inst', u.institutionName);
+      if (u.phone) lock('b-phone', u.phone); // editable when the profile has no number yet
+
+      var note = document.createElement('p');
+      note.className = 'form-note';
+      note.style.marginTop = '0';
+      note.textContent = 'Signed in as ' + u.fullName + ' — this request will be filed under your account. '
+        + 'To book for someone else, please log out first.';
+      form.insertBefore(note, form.firstChild);
+    })();
+
+    // Populate the "preferred counsellor" note is display-only; the request is triaged by staff.
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var name = document.getElementById('b-name').value.trim();
+      var topic = document.getElementById('b-topic').value;
+      if (!name || !topic) { alert('Please fill in your name and topic.'); return; }
+
+      var phone = document.getElementById('b-phone').value.trim();
+      var cls = document.getElementById('b-class').value.trim();
+      var inst = document.getElementById('b-inst').value.trim();
+      var pref = document.getElementById('b-counsellor') ? document.getElementById('b-counsellor').value : '';
+      var msg = document.getElementById('b-msg').value.trim();
+
+      // Shared builder — the student dashboard uses the same one, so both produce an
+      // identical record and the Centre reads one consistent layout.
+      var description = window.PortalCounselling.buildDescription({
+        message: msg, name: name, phone: phone, classYear: cls, institution: inst, counsellor: pref,
+      });
+
+      var original = btn.innerHTML;
+      btn.disabled = true; btn.textContent = 'Submitting…';
+      try {
+        await window.PortalAPI('/api/counselling', {
+          method: 'POST',
+          body: {
+            requestType: topic,
+            fullName: name,
+            phone: phone,
+            description: description,
+            preferredTime: document.getElementById('b-date').value.trim() || null,
+          },
+        });
+        form.innerHTML = '<div style="text-align:center;padding:40px 20px">'
+          + '<h3 style="color:var(--green);font-family:var(--font-display);font-size:1.4rem;margin-bottom:10px">Request received ✓</h3>'
+          + '<p style="opacity:.75">Thank you, ' + name.replace(/[<>&]/g, '') + '. The Counselling Centre has your request and will contact you soon.</p></div>';
+      } catch (ex) {
+        btn.disabled = false; btn.innerHTML = original;
+        alert(ex.message || 'Could not submit. Please try again.');
+      }
+    });
+  })();
+  </script>
 </body>
 
 </html>

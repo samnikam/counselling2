@@ -1,0 +1,240 @@
+/* ============================================================
+   Site-wide polish — additive only.
+   Loaded AFTER style.css on every public page, so it refines the
+   existing design (reusing its tokens) without changing any markup.
+   ============================================================ */
+
+/* ---- Text selection + smoother scrolling ---- */
+::selection { background: var(--apricot); color: var(--green); }
+html { scroll-behavior: smooth; }
+
+/* ---- Reading-progress bar (filled by enhance.js) ---- */
+.reading-progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0;
+  background: linear-gradient(90deg, var(--green), var(--terracotta));
+  z-index: 1200; transition: width .1s linear; pointer-events: none;
+}
+
+/* ---- Back-to-top button (created by enhance.js) ---- */
+.to-top {
+  position: fixed; right: 22px; bottom: 22px; width: 46px; height: 46px;
+  border-radius: 50%; border: none; cursor: pointer; z-index: 1100;
+  background: var(--green); color: var(--cream);
+  display: grid; place-items: center;
+  box-shadow: var(--shadow-md, 0 14px 34px rgba(33,64,47,.18));
+  opacity: 0; transform: translateY(16px); pointer-events: none;
+  transition: opacity .35s var(--ease), transform .35s var(--ease), background .3s var(--ease);
+}
+.to-top.show { opacity: 1; transform: none; pointer-events: auto; }
+.to-top:hover { background: var(--green-soft); transform: translateY(-3px); }
+.to-top svg { width: 20px; height: 20px; }
+
+/* ---- Soft cursor spotlight (created by enhance.js, desktop only) ----
+   A faint warm glow that follows the pointer. pointer-events:none so it can
+   never block a click; sits above content but is purely decorative. */
+.fx-spotlight {
+  position: fixed; top: 0; left: 0; width: 420px; height: 420px;
+  margin: -210px 0 0 -210px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(231, 169, 126, 0.18) 0%, rgba(231, 169, 126, 0) 62%);
+  pointer-events: none; z-index: 900; opacity: 0;
+  transition: opacity .45s var(--ease); will-change: transform;
+}
+.fx-spotlight.on { opacity: 1; }
+@media (hover: none), (prefers-reduced-motion: reduce) { .fx-spotlight { display: none; } }
+
+/* ---- Refined focus visibility (accessibility) ---- */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--terracotta); outline-offset: 3px; border-radius: 4px;
+}
+
+/* ---- Gentle zoom on opt-in images (never touches the existing .card component) ---- */
+.img-zoom { overflow: hidden; }
+.img-zoom img { transition: transform .8s var(--ease); }
+.img-zoom:hover img { transform: scale(1.06); }
+
+/* ---- Reusable "impact band" used on the homepage ---- */
+.impact-band {
+  background: var(--green);
+  color: var(--cream);
+  padding: 64px 0;
+}
+.impact-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 30px; text-align: center;
+}
+.impact-grid .impact {
+  padding: 10px;
+}
+.impact-grid .impact .n {
+  font-family: var(--font-display); font-size: 2.8rem; line-height: 1;
+  color: var(--apricot);
+}
+.impact-grid .impact .l {
+  margin-top: 10px; font-size: .9rem; opacity: .85; letter-spacing: .01em;
+}
+
+/* ---- "How it works" step strip (homepage only) ----
+   Prefixed hiw- so it never collides with the site's existing .steps/.step
+   numbered-list component used on the Career and About pages. */
+.hiw-steps {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px;
+}
+.hiw-step {
+  background: var(--white); border-radius: var(--radius-lg); padding: 30px 26px;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(33,64,47,.06)); position: relative;
+  border-top: 4px solid var(--green);
+}
+.hiw-step:nth-child(2) { border-top-color: var(--terracotta); }
+.hiw-step:nth-child(3) { border-top-color: var(--sky, #4C86A8); }
+.hiw-step:nth-child(4) { border-top-color: var(--gold, #E0A93B); }
+.hiw-step .step-n {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--cream-deep);
+  color: var(--green); display: grid; place-items: center; font-weight: 800;
+  font-family: var(--font-display); margin-bottom: 16px; font-size: 1.05rem;
+}
+.hiw-step h4 { color: var(--green); font-family: var(--font-display); margin: 0 0 8px; font-size: 1.15rem; }
+.hiw-step p { margin: 0; font-size: .92rem; color: var(--green-soft); line-height: 1.55; }
+
+/* ---- Language chips (PDF §5.13) footer helper reused inline ---- */
+.lang-inline { display: inline-flex; gap: 8px; }
+.lang-inline span {
+  font-size: .74rem; padding: 4px 12px; border-radius: 999px;
+  background: rgba(33,64,47,.06); color: var(--green); font-weight: 600;
+}
+
+/* ============================================================
+   Sub-page visual richness (everything below is scoped to
+   body:not(.home), so the homepage is never affected).
+   Pure pseudo-elements — no markup changes anywhere.
+   ============================================================ */
+
+/* ---- Sub-page hero: soft floating orbs for depth ---- */
+body:not(.home) .page-hero { position: relative; }
+body:not(.home) .page-hero::before {
+  content: ''; position: absolute; left: -70px; bottom: -90px;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(76, 134, 168, 0.20) 0%, rgba(247, 243, 235, 0) 70%);
+  filter: blur(38px); pointer-events: none; z-index: 0;
+  animation: deco-float-a 13s ease-in-out infinite;
+}
+body:not(.home) .page-hero .container { position: relative; z-index: 2; }
+
+@keyframes deco-float-a {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-26px) translateX(14px); }
+}
+@keyframes deco-float-b {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(20px) scale(1.08); }
+}
+
+/* ---- Intro sections: dotted texture + a soft colour blob ---- */
+body:not(.home) .section-alt { position: relative; overflow: hidden; }
+body:not(.home) .section-alt::before {
+  content: ''; position: absolute; top: 28px; right: 34px;
+  width: 130px; height: 130px; pointer-events: none; opacity: .55;
+  background-image: radial-gradient(var(--sage) 1.6px, transparent 1.7px);
+  background-size: 17px 17px;
+}
+body:not(.home) .section-alt::after {
+  content: ''; position: absolute; left: -80px; bottom: -80px;
+  width: 260px; height: 260px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(231, 169, 126, 0.18) 0%, rgba(247, 243, 235, 0) 70%);
+  filter: blur(34px);
+  animation: deco-float-b 15s ease-in-out infinite;
+}
+body:not(.home) .section-alt .container { position: relative; z-index: 2; }
+
+/* ---- Green feature bands: subtle drifting glow ---- */
+body:not(.home) .section-green { position: relative; overflow: hidden; }
+body:not(.home) .section-green::before {
+  content: ''; position: absolute; top: -60px; right: -40px;
+  width: 320px; height: 320px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(231, 169, 126, 0.16) 0%, rgba(33, 64, 47, 0) 70%);
+  filter: blur(40px);
+  animation: deco-float-a 16s ease-in-out infinite;
+}
+body:not(.home) .section-green .container { position: relative; z-index: 2; }
+
+/* ---- Animated gradient underline under sub-page section headings ---- */
+body:not(.home) .section-head.center h2 { position: relative; display: inline-block; }
+body:not(.home) .section-head.center h2::after {
+  content: ''; position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%);
+  width: 54px; height: 4px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--green), var(--terracotta));
+}
+
+/* ============================================================
+   Homepage hero image — extra additive effects.
+   Scoped to .home and uses only pseudo-elements the base stylesheet
+   leaves free (::before on the photo frame, ::after on the icon),
+   so none of the existing hero effects (photo zoom, gradient veil,
+   float card, orbs) are altered.
+   ============================================================ */
+
+/* A gentle animated glow around the photo frame — makes it feel alive. */
+.home .hero-split-right {
+  animation: heroPhotoGlow 6s var(--ease) infinite;
+}
+@keyframes heroPhotoGlow {
+  0%, 100% { box-shadow: 0 22px 55px rgba(33, 64, 47, 0.18); }
+  50%      { box-shadow: 0 26px 72px rgba(231, 169, 126, 0.32); }
+}
+
+/* Diagonal light glare that sweeps across the photo on hover. */
+.home .hero-split-right::before {
+  content: '';
+  position: absolute;
+  top: -25%;
+  left: -60%;
+  width: 45%;
+  height: 150%;
+  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-18deg);
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+}
+.home .hero-split-right:hover::before {
+  opacity: 1;
+  animation: heroGlare 1.15s var(--ease);
+}
+@keyframes heroGlare {
+  0%   { left: -60%; opacity: 0; }
+  10%  { opacity: 1; }
+  100% { left: 130%; opacity: 0; }
+}
+
+/* Soft breathing pulse ring around the floating card's icon. */
+.home .hero-float-icon { position: relative; }
+.home .hero-float-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 rgba(33, 64, 47, 0.45);
+  animation: heroIconPulse 2.8s var(--ease) infinite;
+}
+@keyframes heroIconPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(33, 64, 47, 0.40); }
+  70%  { box-shadow: 0 0 0 15px rgba(33, 64, 47, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(33, 64, 47, 0); }
+}
+
+/* Respect users who prefer no motion. */
+@media (prefers-reduced-motion: reduce) {
+  body:not(.home) .page-hero::before,
+  body:not(.home) .section-alt::after,
+  body:not(.home) .section-green::before { animation: none; }
+  .home .hero-split-right,
+  .home .hero-float-icon::after { animation: none; }
+  .home .hero-split-right:hover::before { animation: none; opacity: 0; }
+}
+
+@media (max-width: 600px) {
+  .impact-grid .impact .n { font-size: 2.2rem; }
+  .to-top { right: 14px; bottom: 14px; }
+  body:not(.home) .section-alt::before { display: none; }
+}
