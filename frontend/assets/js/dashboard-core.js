@@ -7,6 +7,7 @@
   'use strict';
 
   var API = (window.PORTAL_API_BASE || '').replace(/\/$/, '');
+  var COPYRIGHT_YEAR = new Date().getFullYear();
 
   // ---- sidebar icons ----
   // Small line icons (inherit the button's colour via currentColor) so every menu item is
@@ -78,6 +79,37 @@
     toastEl.className = 'toast show' + (isErr ? ' err' : '');
     clearTimeout(toast._t);
     toast._t = setTimeout(function () { toastEl.className = 'toast' + (isErr ? ' err' : ''); }, 3000);
+  }
+
+  /**
+   * Compact ownership footer for dashboard pages. GIGW requires ownership information
+   * and the statutory policy links on every page, not only the public ones — but the
+   * full four-column public footer would crowd an app shell, so this is the short form.
+   */
+  function buildDashFooter() {
+    var f = document.createElement('footer');
+    f.className = 'dash-footer';
+    f.innerHTML =
+      '<div class="dash-footer-in">'
+      + '<p><strong>Content owned, updated and maintained by</strong> the Counselling &amp; Youth Development Center, '
+      + 'District Administration Anantnag, Government of Jammu &amp; Kashmir.</p>'
+      + '<nav class="dash-footer-links" aria-label="Website policies">'
+      + '<a href="policies.html#terms">Terms &amp; Conditions</a>'
+      + '<a href="policies.html#privacy">Privacy Policy</a>'
+      + '<a href="policies.html#hyperlinking">Hyperlinking Policy</a>'
+      + '<a href="policies.html#copyright">Copyright Policy</a>'
+      + '<a href="policies.html#disclaimer">Disclaimer</a>'
+      + '<a href="policies.html#accessibility">Accessibility Statement</a>'
+      + '<a href="policies.html#screen-reader">Screen Reader Access</a>'
+      + '<a href="policies.html#grievance">Grievance Redressal</a>'
+      + '<a href="policies.html#feedback">Feedback</a>'
+      + '<a href="policies.html#help">Help</a>'
+      + '</nav>'
+      + '<p class="dash-footer-base"><span>&copy; ' + COPYRIGHT_YEAR
+      + ' District Administration, Anantnag, Government of Jammu &amp; Kashmir.</span>'
+      + '<a href="https://www.india.gov.in" target="_blank" rel="noopener">india.gov.in &mdash; National Portal of India</a></p>'
+      + '</div>';
+    return f;
   }
 
   /**
@@ -153,6 +185,7 @@
     shell.appendChild(nav);
     shell.appendChild(main);
     document.body.appendChild(shell);
+    document.body.appendChild(buildDashFooter());
 
     nav.querySelectorAll('button').forEach(function (b) {
       b.addEventListener('click', function () { switchSection(cfg, b.getAttribute('data-sec')); });

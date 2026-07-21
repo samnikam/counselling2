@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img"
+  aria-label="Placeholder for the official emblem">
+  <!--
+    PLACEHOLDER ONLY — replace with the official emblem supplied by the
+    District Administration. This is a neutral geometric seal and is
+    deliberately NOT the State Emblem of India: reproducing that emblem
+    is restricted under the State Emblem of India (Prohibition of
+    Improper Use) Act, 2005 and the artwork must be obtained through
+    official channels.
+    Replace this file with emblem.svg (or .png at 240x240 or larger).
+  -->
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#F7F3EB" stroke-width="2" opacity=".55" />
+  <circle cx="60" cy="60" r="47" fill="none" stroke="#F7F3EB" stroke-width="1" opacity=".35"
+    stroke-dasharray="3 4" />
+  <path d="M60 30 L84 74 H36 Z" fill="none" stroke="#F7F3EB" stroke-width="2" opacity=".5"
+    stroke-linejoin="round" />
+  <circle cx="60" cy="62" r="9" fill="none" stroke="#F7F3EB" stroke-width="2" opacity=".5" />
+  <text x="60" y="98" text-anchor="middle" font-family="Figtree, Segoe UI, sans-serif" font-size="9"
+    letter-spacing="1.4" fill="#F7F3EB" opacity=".6">EMBLEM</text>
+</svg>

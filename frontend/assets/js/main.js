@@ -98,3 +98,29 @@ document.querySelectorAll('form[data-demo]').forEach(form => {
     setTimeout(() => { btn.innerHTML = original; btn.disabled = false; form.reset(); }, 2600);
   });
 });
+
+/* ============================================================
+   Footer statutory fields
+   ------------------------------------------------------------
+   GIGW requires every page to show the content review date and
+   ownership. The review date is deliberately NOT auto-set to
+   "today" — that would falsely assert the content was reviewed
+   on every page load. Update CONTENT_REVIEWED below whenever the
+   content is actually reviewed; all pages pick it up from here.
+   ============================================================ */
+const CONTENT_REVIEWED = '2026-07-21';
+
+(function stampFooter() {
+  document.querySelectorAll('[data-copyright-year]').forEach(el => {
+    el.textContent = String(new Date().getFullYear());
+  });
+
+  const reviewed = new Date(CONTENT_REVIEWED + 'T00:00:00');
+  const label = reviewed.toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+  document.querySelectorAll('[data-review-date]').forEach(el => {
+    el.textContent = label;
+    el.setAttribute('datetime', CONTENT_REVIEWED);
+  });
+})();

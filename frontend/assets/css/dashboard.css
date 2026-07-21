@@ -191,3 +191,77 @@ table.tbl tbody tr:hover { background: var(--cream); }
   /* Group headings only make sense in the vertical layout; hide them in the scroll strip. */
   .dash-nav-group { display: none; }
 }
+
+/* ---------- Ownership footer (GIGW: required on every page, incl. dashboards) ---------- */
+.dash-footer {
+  background: var(--green);
+  color: rgba(247, 243, 235, .78);
+  margin-top: 34px;
+}
+
+.dash-footer-in {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 26px 22px 22px;
+  font-size: .82rem;
+  line-height: 1.7;
+}
+
+.dash-footer-in p {
+  margin: 0;
+  max-width: 780px;
+}
+
+.dash-footer-in strong {
+  color: rgba(247, 243, 235, .95);
+  font-weight: 600;
+}
+
+.dash-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 14px 0;
+}
+
+.dash-footer-links a {
+  color: rgba(247, 243, 235, .78);
+  padding: 0 12px;
+  border-right: 1px solid rgba(247, 243, 235, .22);
+  line-height: 1.2;
+}
+
+.dash-footer-links a:first-child {
+  padding-left: 0;
+}
+
+.dash-footer-links a:last-child {
+  border-right: 0;
+}
+
+.dash-footer a:hover {
+  color: var(--apricot);
+  text-decoration: underline;
+}
+
+.dash-footer-base {
+  border-top: 1px solid rgba(247, 243, 235, .15);
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: rgba(247, 243, 235, .6);
+}
+
+.dash-footer-base a {
+  color: rgba(247, 243, 235, .6);
+}
+
+@media (max-width: 640px) {
+  .dash-footer-links a {
+    padding-left: 0;
+    border-right: 0;
+    flex: 0 0 50%;
+  }
+}
