@@ -6,12 +6,14 @@ databases:
   - name: anantnag-db
     databaseName: anantnag_portal
     plan: free            # Free Postgres. Upgrade later for permanent storage.
+    region: singapore      # Must match the web service region below (same private network).
 
 services:
   - type: web
     name: anantnag-portal
     runtime: node
     plan: free            # Free web service. Upgrade for uploads that never disappear.
+    region: singapore      # Same region as the database so the app can reach it.
     rootDir: backend       # The app lives in the backend/ folder.
     buildCommand: npm install
     startCommand: npm start
