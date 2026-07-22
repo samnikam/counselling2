@@ -284,20 +284,15 @@
       var name = (form.first.value + ' ' + form.last.value).trim();
       var email = form.email.value.trim();
       var role = form.role.value;
-      var description = 'Website contact enquiry'
-        + '\nName: ' + name
-        + '\nEmail: ' + email
-        + '\nRole: ' + role
-        + '\n\n' + form.message.value.trim();
 
       var original = btn.innerHTML;
       btn.disabled = true; btn.textContent = 'Sending…';
       try {
-        // requestType "other" is a valid general category; the enquiry lands in the
-        // Counselling Centre's Requests inbox for staff to read and respond to.
-        await window.PortalAPI('/api/counselling', {
+        // Enquiries have their own store and their own "Contact Enquiries" tab on the
+        // Counsellor/Admin dashboard, separate from clinical counselling requests.
+        await window.PortalAPI('/api/contact', {
           method: 'POST',
-          body: { requestType: 'other', fullName: name, description: description },
+          body: { name: name, email: email, role: role, message: form.message.value.trim() },
         });
         form.innerHTML = '<div style="text-align:center;padding:40px 20px">'
           + '<h3 style="color:var(--green);font-family:var(--font-display);font-size:1.4rem;margin-bottom:10px">Message received ✓</h3>'

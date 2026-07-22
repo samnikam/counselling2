@@ -257,3 +257,15 @@ CREATE TABLE IF NOT EXISTS portal_settings (
   value      TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ─── Contact enquiries (public "Contact Us" form → Counsellor/Admin dashboard) ───
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id         SERIAL PRIMARY KEY,
+  name       TEXT NOT NULL,
+  email      TEXT,
+  role       TEXT,
+  message    TEXT NOT NULL,
+  status     TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'read', 'resolved')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_messages(created_at DESC);

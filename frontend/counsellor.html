@@ -26,13 +26,44 @@
       sections: [
         { id: 'requests', label: 'Requests', icon: 'clipboard', group: 'Counselling' },
         { id: 'mine', label: 'Assigned to me', icon: 'user', group: 'Counselling' },
+        { id: 'enquiries', label: 'Contact Enquiries', icon: 'chat', group: 'Counselling' },
         { id: 'career', label: 'Career Resources', icon: 'compass', group: 'Guidance' },
         { id: 'discussions', label: 'Discussions', icon: 'message', group: 'Guidance' },
         { id: 'alerts', label: 'Alerts', icon: 'megaphone', badge: true, group: 'Guidance' },
       ],
       onSection: render,
     }).then(function () { D.refreshAlertBadge('alerts'); });
-    function render(id) { ({ requests: function () { list(''); }, mine: function () { list('?mine=1'); }, career: career, discussions: discussions, alerts: function () { D.alertsView('alerts'); } }[id] || function () { list(''); })(); }
+    function render(id) { ({ requests: function () { list(''); }, mine: function () { list('?mine=1'); }, enquiries: enquiries, career: career, discussions: discussions, alerts: function () { D.alertsView('alerts'); } }[id] || function () { list(''); })(); }
+
+    // Contact Us enquiries submitted from the public website.
+    async function enquiries() {
+      main().innerHTML = '<h1 class="dash-h">Contact Enquiries</h1>'
+        + '<p class="dash-sub">Messages sent through the public "Contact Us" form on the website.</p>'
+        + '<div id="enq"><div class="empty">Loading…</div></div>';
+      loadEnquiries();
+    }
+    async function loadEnquiries() {
+      var rows = await api('/api/contact');
+      var pill = { new: 'amber', read: 'green', resolved: 'grey' };
+      document.getElementById('enq').innerHTML = rows.map(function (m) {
+        return '<div class="card"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">'
+          + '<div style="flex:1;min-width:200px"><h3 style="margin-bottom:6px">' + esc(m.name)
+          + ' <span class="pill ' + (pill[m.status] || 'grey') + '">' + esc(m.status) + '</span></h3>'
+          + '<p style="font-size:.86rem;white-space:pre-line">' + esc(m.message) + '</p>'
+          + '<div class="meta" style="font-size:.74rem;opacity:.7;margin-top:6px">'
+          + (m.email ? 'Email: ' + esc(m.email) : 'No email given')
+          + (m.role ? ' · ' + esc(m.role) : '') + ' · ' + D.fmtDateTime(m.created_at) + '</div></div>'
+          + '<div><select data-est="' + m.id + '" style="font-size:.76rem;padding:6px;border:1.5px solid var(--sage);border-radius:8px">'
+          + ['new', 'read', 'resolved'].map(function (s) { return '<option' + (s === m.status ? ' selected' : '') + '>' + s + '</option>'; }).join('')
+          + '</select></div></div></div>';
+      }).join('') || '<div class="empty">No enquiries yet.</div>';
+      document.querySelectorAll('[data-est]').forEach(function (s) {
+        s.onchange = async function () {
+          try { await api('/api/contact/' + s.dataset.est, { method: 'PUT', body: { status: s.value } }); toast('Updated.'); }
+          catch (ex) { toast(ex.message, true); }
+        };
+      });
+    }
 
     async function list(query) {
       main().innerHTML = '<h1 class="dash-h">Counselling Requests</h1><p class="dash-sub">Confidential — for Counselling Centre staff only.</p>'
