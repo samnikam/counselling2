@@ -4,11 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Institution Dashboard — Anantnag Youth Portal</title>
+  <meta name="description" content="Institution dashboard for schools and colleges of Anantnag district — manage students, notices, events and media.">
+  <meta name="robots" content="noindex, nofollow">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="assets/images/emblem-placeholder.svg">
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body>
+  <noscript><div style="max-width:640px;margin:60px auto;padding:24px 28px;font-family:sans-serif;border:1.5px solid #ccc;border-radius:12px;text-align:center"><h1 style="font-size:1.3rem;margin-bottom:10px">JavaScript is required</h1><p>This dashboard needs JavaScript to load. Please enable it in your browser, or contact <a href="mailto:info@anantnagyouth.in">info@anantnagyouth.in</a> for assistance. You can still read our <a href="policies.html">website policies</a> and <a href="contact.html">contact information</a>.</p></div></noscript>
   <script src="assets/js/portal-auth.js"></script>
   <script src="assets/js/dashboard-core.js"></script>
   <script>
@@ -35,7 +39,7 @@
       main().innerHTML = '<h1 class="dash-h">Students</h1><p class="dash-sub">Manage your institution\'s students.</p>'
         + '<div class="card"><h3>Add student</h3><form id="sF"><div class="f f-row">'
         + '<div><label>Full name</label><input name="fullName" required></div><div><label>Email</label><input type="email" name="email" required></div>'
-        + '<div><label>Class / Year</label><input name="classYear"></div><div><label>Temp password</label><input name="password" minlength="8" required></div>'
+        + '<div><label>Class / Year</label><input name="classYear"></div><div><label>Temp password</label><input type="password" name="password" minlength="8" required autocomplete="new-password"></div>'
         + '</div><button class="dash-btn" type="submit">Add student</button></form></div>'
         + '<div class="card"><div class="tbl-wrap"><table class="tbl" id="sTbl"><tbody><tr><td>Loading…</td></tr></tbody></table></div></div>';
       document.getElementById('sF').addEventListener('submit', async function (e) { e.preventDefault(); var f = e.target; try { await api('/api/institution/students', { method: 'POST', body: { fullName: f.fullName.value, email: f.email.value, classYear: f.classYear.value, password: f.password.value } }); toast('Student added.'); f.reset(); loadStudents(); } catch (ex) { toast(ex.message, true); } });
@@ -106,12 +110,13 @@
         + '<div class="card"><h3>Upload media</h3><form id="gF">'
         + '<div class="f f-row"><div><label>Title*</label><input name="title" required></div>'
         + '<div><label>Caption (optional)</label><input name="caption"></div></div>'
-        + '<div class="f" style="margin-bottom:13px"><label>Photo or video*</label><input type="file" name="file" accept="image/*,video/*" required></div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Photo or video*</label><input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm" required><small style="display:block;margin-top:6px;opacity:.7;font-size:.78rem">Accepted: JPG, PNG, GIF, WEBP, MP4 or WEBM — up to 25 MB.</small></div>'
         + '<button class="dash-btn" type="submit">Upload</button></form></div>'
         + '<div class="card"><h3>Published media</h3><div id="gl" class="media-grid"><div class="empty">Loading…</div></div></div>';
       document.getElementById('gF').addEventListener('submit', async function (e) {
         e.preventDefault(); var f = e.target;
         if (!f.file.files.length) return;
+        if (f.file.files[0].size > 25 * 1024 * 1024) { toast('File is too large. Maximum size is 25 MB.', true); return; }
         var isVideo = (f.file.files[0].type || '').indexOf('video/') === 0;
         var fd = new FormData();
         fd.append('title', f.title.value); if (f.caption.value) fd.append('caption', f.caption.value);
@@ -141,7 +146,7 @@
       main().innerHTML = '<h1 class="dash-h">Counselling Overview</h1><p class="dash-sub">Counselling activity for your students (status only — notes stay confidential to the Centre).</p><div id="cl"><div class="empty">Loading…</div></div>';
       // Institutions don't have a dedicated endpoint into confidential records by design;
       // they see participation via the reports the district shares. Show a gentle explainer.
-      document.getElementById('cl').innerHTML = '<div class="card"><p style="font-size:.9rem;line-height:1.6">To protect student privacy (PDF §5.14), individual counselling details are visible only to the Counselling Centre and District Administration. Aggregate participation for your institution appears in the district\'s institution-wise report.</p></div>';
+      document.getElementById('cl').innerHTML = '<div class="card"><p style="font-size:.9rem;line-height:1.6">To protect student privacy, individual counselling details are visible only to the Counselling Centre and District Administration. Aggregate participation for your institution appears in the district\'s institution-wise report.</p></div>';
     }
   })();
   </script>

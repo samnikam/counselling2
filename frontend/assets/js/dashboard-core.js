@@ -93,6 +93,9 @@
       '<div class="dash-footer-in">'
       + '<p><strong>Content owned, updated and maintained by</strong> the Counselling &amp; Youth Development Center, '
       + 'District Administration Anantnag, Government of Jammu &amp; Kashmir.</p>'
+      + '<p>Helpline: <a href="tel:+911932234100">+91 1932 234 100</a> &middot; '
+      + '<a href="mailto:info@anantnagyouth.in">info@anantnagyouth.in</a> &middot; '
+      + 'Mon&ndash;Sat, 10:00 AM &ndash; 5:00 PM</p>'
       + '<nav class="dash-footer-links" aria-label="Website policies">'
       + '<a href="policies.html#terms">Terms &amp; Conditions</a>'
       + '<a href="policies.html#privacy">Privacy Policy</a>'
@@ -140,11 +143,94 @@
 
     buildChrome(cfg, user);
     window.DASH.user = user;
+    accessibilityEnhance();   // GIGW/WCAG: table headers + label associations
+    startIdleGuard();         // Session-timeout warning + auto sign-out
 
     // Open the first section (or the one named in the URL hash).
     var initial = (location.hash || '').replace('#', '') || cfg.sections[0].id;
     switchSection(cfg, initial);
     return user;
+  }
+
+  /**
+   * Additive accessibility pass for the JS-rendered dashboards (GIGW / WCAG 2.1 AA).
+   * Watches the shell and, as views render, (a) gives every table header a scope,
+   * and (b) programmatically associates each label with its control. Purely
+   * attribute-level — no visual change.
+   */
+  var a11yUid = 0;
+  function associateLabels(root) {
+    root.querySelectorAll('label:not([for])').forEach(function (lab) {
+      // Skip labels that already wrap their own control.
+      if (lab.querySelector('input, select, textarea')) return;
+      var parent = lab.parentElement;
+      if (!parent) return;
+      var ctrl = parent.querySelector('input, select, textarea');
+      if (!ctrl) return;
+      if (!ctrl.id) ctrl.id = 'f-a11y-' + (++a11yUid);
+      lab.setAttribute('for', ctrl.id);
+    });
+  }
+  function scopeTables(root) {
+    root.querySelectorAll('thead th:not([scope])').forEach(function (th) {
+      th.setAttribute('scope', 'col');
+    });
+    root.querySelectorAll('table:not([data-a11y])').forEach(function (tbl) {
+      tbl.setAttribute('data-a11y', '1');
+      if (!tbl.querySelector('caption')) {
+        var cap = document.createElement('caption');
+        cap.className = 'sr-only';
+        // Nearest section heading gives the table a meaningful name.
+        var h = document.querySelector('#dash-main .dash-h');
+        cap.textContent = (h ? h.textContent + ' — ' : '') + 'data table';
+        tbl.insertBefore(cap, tbl.firstChild);
+      }
+    });
+  }
+  function accessibilityEnhance() {
+    var run = function () {
+      var main = document.getElementById('dash-main');
+      if (main) { associateLabels(main); scopeTables(main); }
+      document.querySelectorAll('.pa-overlay .pa-modal').forEach(associateLabels);
+    };
+    run();
+    var obs = new MutationObserver(function () { run(); });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /**
+   * Session-timeout guard (GIGW/security best practice). Any activity resets the timer.
+   * At 25 minutes idle a warning appears; at 30 minutes the session is ended and the
+   * user is returned to the home page. Times are generous so active users never see it.
+   */
+  function startIdleGuard() {
+    var WARN_MS = 25 * 60 * 1000, OUT_MS = 30 * 60 * 1000;
+    var warnT, outT, warnEl;
+    function clearWarn() { if (warnEl) { warnEl.remove(); warnEl = null; } }
+    async function signOut() {
+      try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+      window.location.href = '/index.html';
+    }
+    function showWarn() {
+      if (warnEl) return;
+      warnEl = document.createElement('div');
+      warnEl.className = 'pa-overlay open';
+      warnEl.innerHTML = '<div class="pa-modal"><h2 class="pa-title">Still there?</h2>'
+        + '<p class="pa-sub">For your security, you will be signed out shortly due to inactivity.</p>'
+        + '<button class="pa-submit" type="button">Stay signed in</button></div>';
+      document.body.appendChild(warnEl);
+      warnEl.querySelector('.pa-submit').addEventListener('click', reset);
+    }
+    function reset() {
+      clearWarn();
+      clearTimeout(warnT); clearTimeout(outT);
+      warnT = setTimeout(showWarn, WARN_MS);
+      outT = setTimeout(signOut, OUT_MS);
+    }
+    ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(function (ev) {
+      window.addEventListener(ev, function () { if (!warnEl) reset(); }, { passive: true });
+    });
+    reset();
   }
 
   function buildChrome(cfg, user) {
@@ -158,6 +244,13 @@
       + '<button class="dash-btn ghost sm" id="dash-pw">Password</button>'
       + '<button class="dash-btn sm" id="dash-logout">Logout</button>';
     document.body.insertBefore(top, document.body.firstChild);
+
+    // Skip-to-content link (GIGW/WCAG 2.4.1) — first focusable element on the page.
+    var skip = document.createElement('a');
+    skip.href = '#dash-main';
+    skip.className = 'skip-link';
+    skip.textContent = 'Skip to main content';
+    document.body.insertBefore(skip, document.body.firstChild);
 
     var shell = document.createElement('div');
     shell.className = 'dash-shell';
@@ -181,6 +274,7 @@
     var main = document.createElement('main');
     main.className = 'dash-main';
     main.id = 'dash-main';
+    main.setAttribute('tabindex', '-1');
     // Each page's onSection(id) renders into #dash-main, so no pre-built section divs are needed.
     shell.appendChild(nav);
     shell.appendChild(main);

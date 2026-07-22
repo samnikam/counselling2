@@ -4,11 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Dashboard — Anantnag Youth Portal</title>
+  <meta name="description" content="Student dashboard for the Anantnag Youth Portal — notices, events, counselling, talent and discussions.">
+  <meta name="robots" content="noindex, nofollow">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="assets/images/emblem-placeholder.svg">
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body>
+  <noscript><div style="max-width:640px;margin:60px auto;padding:24px 28px;font-family:sans-serif;border:1.5px solid #ccc;border-radius:12px;text-align:center"><h1 style="font-size:1.3rem;margin-bottom:10px">JavaScript is required</h1><p>This dashboard needs JavaScript to load. Please enable it in your browser, or contact <a href="mailto:info@anantnagyouth.in">info@anantnagyouth.in</a> for assistance. You can still read our <a href="policies.html">website policies</a> and <a href="contact.html">contact information</a>.</p></div></noscript>
   <script src="assets/js/portal-auth.js"></script>
   <script src="assets/js/dashboard-core.js"></script>
   <script>
@@ -94,8 +98,6 @@
         + '<div><label>School / College*</label><input name="institution" value="' + esc(u.institutionName || '') + '" ' + ro + '></div>'
         + '<div><label>Contact Number*</label><input name="phone" value="' + esc(u.phone || '') + '" required placeholder="Your phone number"></div>'
         + '</div>'
-        + '<div class="f" style="margin-bottom:13px"><label>Preferred Counsellor (optional)</label>'
-        + '<select name="counsellor" id="cSel"><option value="">No preference</option></select></div>'
         + '<div class="f f-row">'
         + '<div><label>I\'d like guidance about*</label><select name="requestType" required>' + PC.topicOptions() + '</select></div>'
         + '<div><label>Preferred language</label><select name="preferredLanguage"><option value="">Any</option><option>English</option><option>Hindi</option><option>Urdu</option></select></div>'
@@ -108,13 +110,6 @@
         + (u.phone ? '' : 'Add a phone number so the Centre can reach you.') + '</p>'
         + '</form></div>'
         + '<div class="card"><h3>My requests</h3><div id="crl"></div></div>';
-
-      // Real counsellors from the database — not a hardcoded list.
-      try {
-        var cs = await api('/api/counselling/counsellors');
-        var sel = document.getElementById('cSel');
-        cs.forEach(function (c) { sel.add(new Option(c.full_name, c.full_name)); });
-      } catch (e) { /* dropdown just stays at "No preference" */ }
 
       document.getElementById('cF').addEventListener('submit', async function (e) {
         e.preventDefault(); var f = e.target;
@@ -132,7 +127,6 @@
                 phone: f.phone.value,
                 classYear: f.classYear.value,
                 institution: f.institution.value,
-                counsellor: f.counsellor.value,
               }),
             },
           });
@@ -194,12 +188,13 @@
         + '<div class="card"><h3>Share something</h3><form id="gF">'
         + '<div class="f f-row"><div><label>Title*</label><input name="title" required></div>'
         + '<div><label>Caption (optional)</label><input name="caption"></div></div>'
-        + '<div class="f" style="margin-bottom:13px"><label>Photo or video*</label><input type="file" name="file" accept="image/*,video/*" required></div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Photo or video*</label><input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm" required><small style="display:block;margin-top:6px;opacity:.7;font-size:.78rem">Accepted: JPG, PNG, GIF, WEBP, MP4 or WEBM — up to 25 MB.</small></div>'
         + '<button class="dash-btn" type="submit">Upload</button></form></div>'
         + '<div class="card"><h3>Gallery</h3><div id="gl" class="media-grid"><div class="empty">Loading…</div></div></div>';
       document.getElementById('gF').addEventListener('submit', async function (e) {
         e.preventDefault(); var f = e.target;
         if (!f.file.files.length) return;
+        if (f.file.files[0].size > 25 * 1024 * 1024) { toast('File is too large. Maximum size is 25 MB.', true); return; }
         var isVideo = (f.file.files[0].type || '').indexOf('video/') === 0;
         var fd = new FormData();
         fd.append('title', f.title.value); if (f.caption.value) fd.append('caption', f.caption.value);

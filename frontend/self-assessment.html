@@ -5,11 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Self Assessment — Anantnag Youth Portal</title>
+  <meta name="description" content="A short, confidential self check-in to reflect on your stress, focus and well-being. No login required.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="assets/images/emblem-placeholder.svg">
+  <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/enhance.css">
     <style>
         /* ===== Wellness quiz — full-page interactive experience ===== */
@@ -361,7 +363,8 @@
 
 <body>
 
-    <header class="navbar">
+    <a href="#maincontent" class="skip-link">Skip to main content</a>
+  <header class="navbar">
         <div class="container nav-inner">
             <a href="index.html" class="logo">
                 <div class="logo-mark">A</div>
@@ -383,6 +386,8 @@
             <button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
         </div>
     </header>
+
+  <main id="maincontent" tabindex="-1">
 
     <!-- ================= HERO ================= -->
     <section class="quiz-hero">
@@ -452,10 +457,17 @@
                     <a href="services.html" class="btn btn-ghost">Explore Support Services</a>
                 </div>
                 <button class="result-restart" id="q-restart">↺ Retake the check-in</button>
+                <p class="form-note" style="justify-content: center; margin-top: 22px;">
+                    This check-in is for self-reflection only and is <strong>not a medical or psychological
+                    diagnosis</strong>. If you are in distress or need urgent help, call
+                    <strong>Tele-MANAS 14416</strong> or <strong>112</strong> — help is available any time.
+                </p>
             </div>
 
         </div>
     </section>
+
+  </main>
 
   <!-- ================= FOOTER ================= -->
   <footer>
@@ -479,6 +491,9 @@
           <p class="footer-address">Counselling &amp; Youth Development Center,<br>
             Office of the Deputy Commissioner,<br>
             Anantnag, Jammu &amp; Kashmir &ndash; 192101</p>
+          <p class="footer-address">Helpline: <a href="tel:+911932234100">+91 1932 234 100</a><br>
+            Email: <a href="mailto:info@anantnagyouth.in">info@anantnagyouth.in</a><br>
+            Working hours: Monday to Saturday, 10:00 AM &ndash; 5:00 PM (except gazetted holidays)</p>
         </div>
 
         <!-- The four policies GIGW requires every government site to publish -->

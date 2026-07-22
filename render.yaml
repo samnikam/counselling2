@@ -1,0 +1,31 @@
+# Render deployment blueprint for the Anantnag Youth Portal.
+# This tells Render to create the web app AND a PostgreSQL database together,
+# and wires them up automatically. Beginner steps are in DEPLOY.md.
+
+databases:
+  - name: anantnag-db
+    databaseName: anantnag_portal
+    plan: free            # Free Postgres. Upgrade later for permanent storage.
+
+services:
+  - type: web
+    name: anantnag-portal
+    runtime: node
+    plan: free            # Free web service. Upgrade for uploads that never disappear.
+    rootDir: backend       # The app lives in the backend/ folder.
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PGSSL
+        value: require              # Managed Postgres needs SSL.
+      - key: SESSION_SECRET
+        generateValue: true         # Render makes a strong random secret for you.
+      - key: ADMIN_PASSWORD
+        sync: false                 # Render will ASK you to type this during setup.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anantnag-db
+          property: connectionString # Auto-filled from the database above.

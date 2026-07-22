@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Authenticated application dashboards — no public content to index.
+Disallow: /admin.html
+Disallow: /counsellor.html
+Disallow: /institution.html
+Disallow: /student.html
+Disallow: /alumni.html
+
+Sitemap: https://anantnagyouth.in/sitemap.xml

@@ -5,10 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book an Appointment — Anantnag Youth Portal</title>
+  <meta name="description" content="Request a confidential counselling appointment with the District Counselling & Youth Development Center, Anantnag.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap"
     rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="assets/images/emblem-placeholder.svg">
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/enhance.css">
   <style>
@@ -60,6 +62,7 @@
 
 <body>
 
+  <a href="#maincontent" class="skip-link">Skip to main content</a>
   <header class="navbar">
     <div class="container nav-inner">
       <a href="index.html" class="logo">
@@ -82,6 +85,8 @@
       <button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
     </div>
   </header>
+
+  <main id="maincontent" tabindex="-1">
 
   <section class="page-hero">
     <div class="container hero-stagger">
@@ -112,16 +117,6 @@
           <div><label for="b-phone">Contact Number*</label><input id="b-phone" type="tel" required
               placeholder="Your phone number"></div>
           <div class="full">
-            <label for="b-counsellor">Preferred Counsellor (optional)</label>
-            <select id="b-counsellor">
-              <option value="">No preference</option>
-              <option>Dr. Yasmin Sajad — Chief Counsellor</option>
-              <option>Tariq Ahmad — Career Guidance Specialist</option>
-              <option>Farah Naaz — Wellness Counsellor</option>
-              <option>Imran Wani — Student Support Coordinator</option>
-            </select>
-          </div>
-          <div class="full">
             <label for="b-topic">I'd like guidance about*</label>
             <select id="b-topic" required>
               <option value="">Select a topic</option>
@@ -137,6 +132,12 @@
               placeholder="e.g. Any weekday afternoon"></div>
           <div class="full"><label for="b-msg">Anything you'd like to share (optional)</label><textarea id="b-msg"
               placeholder="Write freely — this stays confidential"></textarea></div>
+          <div class="full" style="display: flex; gap: 10px; align-items: flex-start;">
+            <input id="b-consent" type="checkbox" required style="width: auto; margin-top: 4px;">
+            <label for="b-consent" style="font-weight: 500; font-size: 0.85rem;">I agree that the details I provide may
+              be used by the Counselling &amp; Youth Development Center to arrange my session, in line with the
+              <a href="policies.html#privacy">Privacy Policy</a>.</label>
+          </div>
           <div class="full"><button type="submit" class="btn btn-solid" style="width: 100%;">Request
               Appointment</button></div>
         </div>
@@ -148,6 +149,8 @@
       </form>
     </div>
   </section>
+
+  </main>
 
   <!-- ================= FOOTER ================= -->
   <footer>
@@ -171,6 +174,9 @@
           <p class="footer-address">Counselling &amp; Youth Development Center,<br>
             Office of the Deputy Commissioner,<br>
             Anantnag, Jammu &amp; Kashmir &ndash; 192101</p>
+          <p class="footer-address">Helpline: <a href="tel:+911932234100">+91 1932 234 100</a><br>
+            Email: <a href="mailto:info@anantnagyouth.in">info@anantnagyouth.in</a><br>
+            Working hours: Monday to Saturday, 10:00 AM &ndash; 5:00 PM (except gazetted holidays)</p>
         </div>
 
         <!-- The four policies GIGW requires every government site to publish -->
@@ -233,18 +239,6 @@
     if (!form) return;
     var btn = form.querySelector('button[type="submit"]');
 
-    // If arriving from a counsellor card (…?counsellor=Name), pre-select that counsellor
-    // and scroll the form into view so the choice is obvious.
-    var picked = new URLSearchParams(location.search).get('counsellor');
-    if (picked) {
-      var sel = document.getElementById('b-counsellor');
-      if (sel) {
-        var found = Array.prototype.some.call(sel.options, function (o) { if (o.value === picked || o.text === picked) { o.selected = true; return true; } });
-        if (!found) { var opt = new Option(picked, picked, true, true); sel.add(opt); }
-      }
-      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
     // A signed-in student's request is always filed against their own account, so the identity
     // fields are filled from that account and locked. Without this, typing someone else's name
     // here produced a record labelled with the account holder but containing a different person's
@@ -276,23 +270,24 @@
       form.insertBefore(note, form.firstChild);
     })();
 
-    // Populate the "preferred counsellor" note is display-only; the request is triaged by staff.
+    // Counsellor assignment is decided by the Centre after triage — students do not pick one.
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
       var name = document.getElementById('b-name').value.trim();
       var topic = document.getElementById('b-topic').value;
       if (!name || !topic) { alert('Please fill in your name and topic.'); return; }
+      var consent = document.getElementById('b-consent');
+      if (consent && !consent.checked) { alert('Please agree to the privacy note to continue.'); return; }
 
       var phone = document.getElementById('b-phone').value.trim();
       var cls = document.getElementById('b-class').value.trim();
       var inst = document.getElementById('b-inst').value.trim();
-      var pref = document.getElementById('b-counsellor') ? document.getElementById('b-counsellor').value : '';
       var msg = document.getElementById('b-msg').value.trim();
 
       // Shared builder — the student dashboard uses the same one, so both produce an
       // identical record and the Centre reads one consistent layout.
       var description = window.PortalCounselling.buildDescription({
-        message: msg, name: name, phone: phone, classYear: cls, institution: inst, counsellor: pref,
+        message: msg, name: name, phone: phone, classYear: cls, institution: inst,
       });
 
       var original = btn.innerHTML;
