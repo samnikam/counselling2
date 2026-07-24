@@ -78,6 +78,7 @@ app.use('/api/career', require('./routes/career.routes'));
 app.use('/api/alumni', require('./routes/alumni.routes'));
 app.use('/api/notifications', require('./routes/notifications.routes'));
 app.use('/api/contact', require('./routes/contact.routes'));
+app.use('/api/settings', require('./routes/settings.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));

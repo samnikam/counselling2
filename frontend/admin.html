@@ -564,13 +564,37 @@
     }
 
     // ─── SETTINGS ───
+    // Values saved here drive the public website: the footer helpline, email, address,
+    // working hours and the GIGW "content last reviewed" date all update immediately.
+    var SETTING_KEYS = ['portal_name', 'helpline_phone', 'contact_email', 'working_hours', 'office_address', 'content_reviewed_on'];
     async function settings() {
-      main().innerHTML = D.header('Settings', 'Portal configuration.')
-        + '<div class="card"><form id="sF" class="f"><div style="margin-bottom:13px"><label>Portal name</label><input name="portal_name"></div><button class="dash-btn" type="submit">Save</button></form></div>';
+      main().innerHTML = D.header('Settings', 'Portal configuration. Contact details saved here appear in the public website footer immediately.')
+        + '<div class="card"><form id="sF">'
+        + '<h3>Portal identity</h3>'
+        + '<div class="f" style="margin:12px 0 13px"><label>Portal name</label><input name="portal_name" placeholder="Anantnag Youth Portal"></div>'
+        + '<h3 style="margin-top:20px">Public contact details</h3>'
+        + '<p class="dash-sub" style="margin:4px 0 12px">Shown in the footer of every public page. Leave a field blank to keep the current website text.</p>'
+        + '<div class="f f-row">'
+        + '<div><label>Helpline number</label><input name="helpline_phone" placeholder="+91 1932 234 100"></div>'
+        + '<div><label>Official email</label><input type="email" name="contact_email" placeholder="info@anantnagyouth.in"></div>'
+        + '</div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Working hours</label><input name="working_hours" placeholder="Monday to Saturday, 10:00 AM – 5:00 PM (except gazetted holidays)"></div>'
+        + '<div class="f" style="margin-bottom:13px"><label>Office address (one line per row)</label><textarea name="office_address" placeholder="Counselling & Youth Development Center,&#10;Office of the Deputy Commissioner,&#10;Anantnag, Jammu & Kashmir – 192101"></textarea></div>'
+        + '<h3 style="margin-top:20px">Website compliance</h3>'
+        + '<p class="dash-sub" style="margin:4px 0 12px">The date content was last reviewed — shown in the footer of every page, as required by GIGW.</p>'
+        + '<div class="f" style="margin-bottom:16px"><label>Content last reviewed on</label><input type="date" name="content_reviewed_on"></div>'
+        + '<button class="dash-btn" type="submit">Save settings</button>'
+        + '</form></div>';
       var s = await api('/api/admin/settings');
       var f = document.getElementById('sF');
-      if (s.portal_name) f.portal_name.value = s.portal_name;
-      f.onsubmit = async function (e) { e.preventDefault(); try { await api('/api/admin/settings', { method: 'PUT', body: { portal_name: f.portal_name.value } }); toast('Saved.'); } catch (ex) { toast(ex.message, true); } };
+      SETTING_KEYS.forEach(function (k) { if (s[k]) f[k].value = s[k]; });
+      f.onsubmit = async function (e) {
+        e.preventDefault();
+        var body = {};
+        SETTING_KEYS.forEach(function (k) { body[k] = f[k].value.trim(); });
+        try { await api('/api/admin/settings', { method: 'PUT', body: body }); toast('Settings saved — the public website is updated.'); }
+        catch (ex) { toast(ex.message, true); }
+      };
     }
   })();
   </script>
