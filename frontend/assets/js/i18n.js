@@ -98,6 +98,52 @@
       'Sitemap': 'साइटमैप',
       'Government of Jammu & Kashmir': 'जम्मू और कश्मीर सरकार',
       'District Administration, Anantnag': 'जिला प्रशासन, अनंतनाग',
+      // ---- Inner-page eyebrows & headings ----
+      'COUNSELLING & YOUTH DEVELOPMENT': 'काउंसलिंग और युवा विकास',
+      'Our Purpose': 'हमारा उद्देश्य',
+      'One Platform. Every Student.': 'एक मंच। हर छात्र।',
+      'The Need': 'आवश्यकता',
+      'Why Anantnag Needs This Portal': 'अनंतनाग को यह पोर्टल क्यों चाहिए',
+      'Who the Portal Covers': 'पोर्टल किसे शामिल करता है',
+      'Expected Benefits': 'अपेक्षित लाभ',
+      'What Everyone Gains': 'सभी को क्या मिलता है',
+      'Meet Our Expert Guidance Team': 'हमारी विशेषज्ञ मार्गदर्शन टीम से मिलें',
+      'WHAT WE OFFER': 'हम क्या देते हैं',
+      'What We Offer': 'हम क्या देते हैं',
+      'Everything the Portal Brings Together': 'पोर्टल जो कुछ एक साथ लाता है',
+      'Inside the Portal': 'पोर्टल के अंदर',
+      'Every Feature, in One Place': 'हर सुविधा, एक ही जगह',
+      'Meet the Team': 'टीम से मिलें',
+      'Qualified People, Ready to Listen': 'योग्य लोग, सुनने के लिए तैयार',
+      'Confidential & Free': 'गोपनीय और निःशुल्क',
+      'Every Session Stays Between You and Your Counsellor': 'हर सत्र आपके और आपके काउंसलर के बीच रहता है',
+      'How We Help': 'हम कैसे मदद करते हैं',
+      "Guidance for What You're Going Through": 'आप जिससे गुज़र रहे हैं उसके लिए मार्गदर्शन',
+      'The Process': 'प्रक्रिया',
+      'Booking a Session Is Simple': 'सत्र बुक करना आसान है',
+      'Ready to Talk?': 'बात करने के लिए तैयार?',
+      'Book a Confidential Counselling Session': 'एक गोपनीय काउंसलिंग सत्र बुक करें',
+      'Request a Counselling Session': 'काउंसलिंग सत्र का अनुरोध करें',
+      'Confidential · No Login · 2 Minutes': 'गोपनीय · कोई लॉगिन नहीं · 2 मिनट',
+      'Explore Paths': 'रास्ते खोजें',
+      'Career Options Worth Knowing': 'जानने योग्य करियर विकल्प',
+      'Guidance Sessions': 'मार्गदर्शन सत्र',
+      'Sessions That Answer Your Real Questions': 'ऐसे सत्र जो आपके असली सवालों के जवाब दें',
+      'Build Skills That Open Doors': 'ऐसे कौशल बनाएँ जो अवसर खोलें',
+      'Upcoming': 'आगामी',
+      'Events & Competitions': 'कार्यक्रम और प्रतियोगिताएँ',
+      'Talent Showcase': 'प्रतिभा प्रदर्शन',
+      'Show the District What You Can Do': 'जिले को दिखाएँ कि आप क्या कर सकते हैं',
+      'Moments from Across the District': 'पूरे जिले के पल',
+      "Don't Miss Out": 'चूकें नहीं',
+      'Every Notice. Every Event. On Your Dashboard.': 'हर सूचना। हर कार्यक्रम। आपके डैशबोर्ड पर।',
+      'MOMENTS': 'पल',
+      'Photo Gallery': 'फ़ोटो गैलरी',
+      'Contact Details': 'संपर्क विवरण',
+      'Reach the Center': 'सेंटर तक पहुँचें',
+      'Quick Answers': 'त्वरित उत्तर',
+      'Frequently Asked': 'अक्सर पूछे जाने वाले',
+      'Terms & Conditions of Use': 'उपयोग के नियम एवं शर्तें',
     },
     ur: {
       // ---- Navigation ----
@@ -181,6 +227,86 @@
       'Sitemap': 'سائٹ میپ',
       'Government of Jammu & Kashmir': 'حکومتِ جموں و کشمیر',
       'District Administration, Anantnag': 'ضلع انتظامیہ، اننت ناگ',
+      // ---- Inner-page eyebrows & headings ----
+      'COUNSELLING & YOUTH DEVELOPMENT': 'کاؤنسلنگ اور نوجوانوں کی ترقی',
+      'Our Purpose': 'ہمارا مقصد',
+      'One Platform. Every Student.': 'ایک پلیٹ فارم۔ ہر طالبِ علم۔',
+      'The Need': 'ضرورت',
+      'Why Anantnag Needs This Portal': 'اننت ناگ کو یہ پورٹل کیوں درکار ہے',
+      'Who the Portal Covers': 'پورٹل کن کو شامل کرتا ہے',
+      'Expected Benefits': 'متوقع فوائد',
+      'What Everyone Gains': 'ہر ایک کو کیا حاصل ہوتا ہے',
+      'Meet Our Expert Guidance Team': 'ہماری ماہر رہنمائی ٹیم سے ملیں',
+      'WHAT WE OFFER': 'ہم کیا پیش کرتے ہیں',
+      'What We Offer': 'ہم کیا پیش کرتے ہیں',
+      'Everything the Portal Brings Together': 'پورٹل جو کچھ ایک ساتھ لاتا ہے',
+      'Inside the Portal': 'پورٹل کے اندر',
+      'Every Feature, in One Place': 'ہر خصوصیت، ایک ہی جگہ',
+      'Meet the Team': 'ٹیم سے ملیں',
+      'Qualified People, Ready to Listen': 'اہل افراد، سننے کے لیے تیار',
+      'Confidential & Free': 'خفیہ اور مفت',
+      'Every Session Stays Between You and Your Counsellor': 'ہر سیشن آپ اور آپ کے کاؤنسلر کے درمیان رہتا ہے',
+      'How We Help': 'ہم کیسے مدد کرتے ہیں',
+      "Guidance for What You're Going Through": 'آپ جس سے گزر رہے ہیں اس کے لیے رہنمائی',
+      'The Process': 'طریقہ کار',
+      'Booking a Session Is Simple': 'سیشن بک کرنا آسان ہے',
+      'Ready to Talk?': 'بات کرنے کے لیے تیار؟',
+      'Book a Confidential Counselling Session': 'ایک خفیہ کاؤنسلنگ سیشن بک کریں',
+      'Request a Counselling Session': 'کاؤنسلنگ سیشن کی درخواست کریں',
+      'Confidential · No Login · 2 Minutes': 'خفیہ · بغیر لاگ اِن · 2 منٹ',
+      'Explore Paths': 'راستے دریافت کریں',
+      'Career Options Worth Knowing': 'جاننے کے قابل کیریئر کے مواقع',
+      'Guidance Sessions': 'رہنمائی سیشنز',
+      'Sessions That Answer Your Real Questions': 'ایسے سیشن جو آپ کے حقیقی سوالوں کے جواب دیں',
+      'Build Skills That Open Doors': 'ایسی مہارتیں بنائیں جو مواقع کھولیں',
+      'Upcoming': 'آئندہ',
+      'Events & Competitions': 'تقریبات اور مقابلے',
+      'Talent Showcase': 'صلاحیتوں کی نمائش',
+      'Show the District What You Can Do': 'ضلع کو دکھائیں کہ آپ کیا کر سکتے ہیں',
+      'Moments from Across the District': 'پورے ضلع کے لمحات',
+      "Don't Miss Out": 'محروم نہ رہیں',
+      'Every Notice. Every Event. On Your Dashboard.': 'ہر نوٹس۔ ہر تقریب۔ آپ کے ڈیش بورڈ پر۔',
+      'MOMENTS': 'لمحات',
+      'Photo Gallery': 'تصویری گیلری',
+      'Contact Details': 'رابطہ تفصیلات',
+      'Reach the Center': 'سینٹر تک پہنچیں',
+      'Quick Answers': 'فوری جوابات',
+      'Frequently Asked': 'اکثر پوچھے گئے سوالات',
+      'Terms & Conditions of Use': 'استعمال کی شرائط و ضوابط',
+    },
+  };
+
+  // Whole-element (innerHTML) translations for the stylised hero titles that contain an
+  // <em> highlight. Keyed by the data-i18n attribute on each title. The <em> is kept so
+  // the coloured-word design is preserved in every language.
+  var RICH = {
+    hi: {
+      'hero-home': 'अनंतनाग के हर <em>छात्र</em> को सशक्त बनाना',
+      'hero-about': '<em>पहल</em> के बारे में',
+      'hero-services': 'दी जाने वाली <em>सेवाएँ</em>',
+      'hero-counsellors': 'हमारे <em>काउंसलर</em>',
+      'hero-counselling': 'जब भी ज़रूरत हो, <em>मार्गदर्शन</em>',
+      'hero-book': '<em>अपॉइंटमेंट</em> बुक करें',
+      'hero-self': 'अपने <em>आप</em> से मिलिए',
+      'hero-career': '<em>करियर</em> मार्गदर्शन और योजना',
+      'hero-events': '<em>कार्यक्रम</em>, गतिविधियाँ और प्रतिभा',
+      'hero-gallery': 'फ़ोटो <em>गैलरी</em>',
+      'hero-contact': 'हमारी टीम से <em>संपर्क</em>',
+      'hero-policies': 'वेबसाइट <em>नीतियाँ</em> और कानूनी जानकारी',
+    },
+    ur: {
+      'hero-home': 'اننت ناگ کے ہر <em>طالبِ علم</em> کو بااختیار بنانا',
+      'hero-about': '<em>اقدام</em> کے بارے میں',
+      'hero-services': 'پیش کردہ <em>خدمات</em>',
+      'hero-counsellors': 'ہمارے <em>کاؤنسلر</em>',
+      'hero-counselling': 'جب بھی ضرورت ہو، <em>رہنمائی</em>',
+      'hero-book': '<em>ملاقات</em> بک کریں',
+      'hero-self': 'اپنے <em>آپ</em> سے ملیے',
+      'hero-career': '<em>کیریئر</em> رہنمائی اور منصوبہ بندی',
+      'hero-events': '<em>تقریبات</em>، سرگرمیاں اور صلاحیت',
+      'hero-gallery': 'تصویری <em>گیلری</em>',
+      'hero-contact': 'ہماری ٹیم سے <em>رابطہ</em>',
+      'hero-policies': 'ویب سائٹ <em>پالیسیاں</em> اور قانونی معلومات',
     },
   };
 
@@ -201,6 +327,7 @@
         var p = n.parentNode;
         while (p && p !== document.body) {
           if (skip[p.nodeName]) return NodeFilter.FILTER_REJECT;
+          if (p.hasAttribute && p.hasAttribute('data-i18n')) return NodeFilter.FILTER_REJECT; // handled whole-element
           if (p.classList && p.classList.contains('pa-i18n')) return NodeFilter.FILTER_REJECT; // the switcher itself
           if (p.classList && p.classList.contains('notranslate')) return NodeFilter.FILTER_REJECT;
           p = p.parentNode;
@@ -222,6 +349,13 @@
       var key = o.en.trim();
       var t = dict[key];
       o.node.nodeValue = t ? o.en.replace(key, t) : o.en;
+    });
+    // Whole-element hero titles (keep their <em> highlight).
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      if (el.getAttribute('data-i18n-en') === null) el.setAttribute('data-i18n-en', el.innerHTML);
+      var orig = el.getAttribute('data-i18n-en');
+      var rich = RICH[lang] && RICH[lang][el.getAttribute('data-i18n')];
+      el.innerHTML = (lang === 'en' || !rich) ? orig : rich;
     });
     document.documentElement.setAttribute('lang', lang);
     document.documentElement.setAttribute('dir', lang === 'ur' ? 'rtl' : 'ltr');
